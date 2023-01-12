@@ -8,14 +8,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
 
-public class DataExtractor {
+public class DataExtractorRiot {
 
-    private static final String APIKEY = "RGAPI-9700535a-e366-4a8e-858d-e2ab8f2889e2";
+    private static final String APIKEY = "RGAPI-430502ec-22bc-40e0-b288-7f2c8fa52231";
     private GsonBuilder gsonBuilder = new GsonBuilder();
     private Gson gson = gsonBuilder.create();
 
     public static void main(String[] args) throws IOException {
-        DataExtractor dataExtractor = new DataExtractor();
+        DataExtractorRiot dataExtractor = new DataExtractorRiot();
         Summoner summoner = dataExtractor.getSummonerByName("ALL RigiCZ");
 
         dataExtractor.addMatchListToSummoner(summoner);
