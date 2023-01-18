@@ -1,4 +1,4 @@
-package model;
+package apiModel;
 
 import com.fasterxml.jackson.annotation.*;
 import java.util.List;

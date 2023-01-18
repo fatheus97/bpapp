@@ -1,9 +1,11 @@
-package model;
+package dbModel;
+
+import apiModel.Match;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Summoner {
+public class Player {
     private String puuid;
     private String name;
     private List<Match> matches = new ArrayList<>();

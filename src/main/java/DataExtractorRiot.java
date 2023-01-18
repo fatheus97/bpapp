@@ -1,6 +1,7 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import model.*;
+import apiModel.*;
+import dbModel.Player;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -16,28 +17,28 @@ public class DataExtractorRiot {
 
     public static void main(String[] args) throws IOException {
         DataExtractorRiot dataExtractor = new DataExtractorRiot();
-        Summoner summoner = dataExtractor.getSummonerByName("ALL RigiCZ");
+        Player player = dataExtractor.getSummonerByName("ALL RigiCZ");
 
-        dataExtractor.addMatchListToSummoner(summoner);
+        dataExtractor.addMatchListToSummoner(player);
     }
 
-    public Summoner getSummonerByName(String name) throws IOException {
+    public Player getSummonerByName(String name) throws IOException {
 
         String codedName = new String(URLEncoder.encode(name, "UTF-8"));
         String url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + codedName;
         String jsonString = this.getDataFromURL(url);
 
-        return gson.fromJson(jsonString, Summoner.class);
+        return gson.fromJson(jsonString, Player.class);
     }
 
-    public void addMatchListToSummoner(Summoner summoner) throws IOException {
+    public void addMatchListToSummoner(Player player) throws IOException {
 
-        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + summoner.getPuuid() + "/ids?queue=420&start=0&count=10";
+        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + player.getPuuid() + "/ids?queue=420&start=0&count=10";
         String jsonString = this.getDataFromURL(url);
         String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
 
         for (String ID: listOfMatchIDs) {
-            summoner.addMatch(this.getMatchByID(ID));
+            player.addMatch(this.getMatchByID(ID));
         }
 
         System.out.println(Arrays.toString(listOfMatchIDs));

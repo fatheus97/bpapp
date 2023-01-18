@@ -1,4 +1,4 @@
-package model;
+package apiModel;
 
 import java.io.IOException;
 import com.fasterxml.jackson.annotation.*;
