@@ -63,12 +63,12 @@ public class Roster {
 
     @Override
     public String toString() {
-        return "Roster{" +
-                "top=" + top +
-                ", jungle=" + jungle +
-                ", mid=" + mid +
-                ", bot=" + bot +
-                ", support=" + support +
+        return "Roster{" + "\n" +
+                "top=" + top + ",\n" +
+                "jungle=" + jungle + ",\n" +
+                "mid=" + mid + ",\n" +
+                "bot=" + bot + ",\n" +
+                "support=" + support + "\n" +
                 '}';
     }
 }

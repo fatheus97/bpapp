@@ -1,6 +1,7 @@
 package dbModel;
 
 import apiModel.Match;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +9,17 @@ import java.util.List;
 public class Account {
     private String puuid;
     private String name;
-    private List<Match> matches = new ArrayList<>();
+    private List<Match> matches;
+    private Boolean competitive;
 
-    public Account(String name) {
+    public Account() {
+        matches = new ArrayList<>();
+        competitive = false;
+    }
+
+    public Account(String name, Boolean competitive) {
         this.name = name;
+        this.competitive = competitive;
     }
 
     public String getName() {
@@ -22,8 +30,12 @@ public class Account {
         return puuid;
     }
 
-    public void setMatches(List<Match> matches) {
-        this.matches = matches;
+    public Boolean getCompetitive() {
+        return competitive;
+    }
+
+    public void setCompetitive(Boolean competitive) {
+        this.competitive = competitive;
     }
 
     @Override
@@ -33,5 +45,9 @@ public class Account {
                 ", name='" + name + '\'' +
                 ", matches=" + matches +
                 '}';
+    }
+
+    public void addMatch(Match match) {
+        matches.add(match);
     }
 }

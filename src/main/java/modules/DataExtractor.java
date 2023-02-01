@@ -10,11 +10,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class DataExtractor {
     private static final String TOURNAMENT = "LEC/2023+Season/Winter+Season";
+    private static final int DAYS = 7;
     private final Gson gson;
 
     public DataExtractor() {
@@ -22,12 +25,7 @@ public class DataExtractor {
         this.gson = gsonBuilder.create();
     }
 
-    /**
-    fdhh
-     @param name asdasd
-     @return oralkhsaflkasf
-     */
-    public Organization getOrganization(String name) {
+    public Organization getOrganization(String name) throws URISyntaxException, IOException, InterruptedException {
 
         Organization organization = new Organization(name, getOrganizationShortcut(name));
         Roster roster = getRoster(name);
@@ -36,8 +34,7 @@ public class DataExtractor {
         return organization;
     }
 
-    //gcmnfmj
-    private String getOrganizationShortcut(String name) {
+    private String getOrganizationShortcut(String name) throws URISyntaxException, IOException, InterruptedException {
 
         String codedName = Utils.encodeString(name);
         String url = "https://lol.fandom.com/api.php?action=cargoquery&format=json&tables=Teams&fields=Short&where=Teams.Name=%27" + codedName + "%27";
@@ -47,7 +44,7 @@ public class DataExtractor {
         return jsonObject.get("cargoquery").getAsJsonArray().get(0).getAsJsonObject().get("title").getAsJsonObject().get("Short").getAsString();
     }
 
-    private Roster getRoster(String name) {
+    private Roster getRoster(String name) throws URISyntaxException, IOException, InterruptedException {
 
         Roster roster = new Roster();
 
@@ -68,44 +65,42 @@ public class DataExtractor {
         return roster;
     }
 
-    public Organization getOrganizationPlayers(Organization org) {
+    public Organization getOrganizationPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
 
         List<Player> players = org.getRoster().getPlayers();
 
         for (Player p : players) {
-            List<Account> accounts = getPlayerAccounts(p.getName());
-            p.setSoloQAccounts(accounts);
+            getPlayerAccounts(p);
         }
 
         return org;
     }
 
-    private Player getPlayer(String playerName, String orgName) {
+    private Player getPlayer(String playerName, String orgName) throws URISyntaxException, IOException, InterruptedException {
 
-        return new Player(playerName, new Account(getOrganizationShortcut(orgName) + " " + playerName));
+        Player player = new Player(playerName);
+        player.addAccount(new Account(getOrganizationShortcut(orgName) + " " + playerName, true));
+
+        return player;
     }
 
-    private List<Account> getPlayerAccounts(String playerName) {
+    private void getPlayerAccounts(Player player) throws IOException, URISyntaxException, InterruptedException {
 
-        List<Account> accounts = new ArrayList<>();
-
-        String codedName = Utils.encodeString(playerName);
+        String codedName = Utils.encodeString(player.getName());
         String url = "https://lolpros.gg/player/" + codedName;
         Document doc = Utils.getDocumentFromURL(url);
 
         if(doc.getElementsByClass("accounts-list").isEmpty()) {
-            accounts.add(getAccount(doc.getElementById("summoner-names").getElementsByTag("p").get(0).text()));
+            player.addAccount(getAccount(doc.getElementById("summoner-names").getElementsByTag("p").get(0).text()));
         } else {
             Elements accountElements = doc.getElementsByClass("accounts-list").get(0).getElementsByTag("span");
             for (Element e: accountElements) {
-                accounts.add(getAccount(e.text()));
+                player.addAccount(getAccount(e.text()));
             }
         }
-
-        return accounts;
     }
 
-    private Account getAccount(String name) {
+    private Account getAccount(String name) throws URISyntaxException, IOException, InterruptedException {
 
         String codedName = Utils.encodeString(name);
         String url = "https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + codedName;
@@ -116,53 +111,28 @@ public class DataExtractor {
         return account;
     }
 
-    public Organization getOrganizationSoloQMatches(Organization org) {
+    public void getAccountMatches(Account acc) throws URISyntaxException, IOException, InterruptedException {
 
-        org.getRoster().getPlayers().forEach(player -> {
-            player.getSoloQAccounts().forEach(account -> {
-                account.setMatches(getAccountMatches(account.getPuuid()));
-            });
-        });
-
-        return org;
-    }
-
-    private List<Match> getAccountMatches(String puuid) {
-
-        String codedPuuid = Utils.encodeString(puuid);
-        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + codedPuuid + "/ids?queue=420startTime=" + Utils.getTimestampInSeconds() + "&count=100";
-        String jsonString = Utils.getJSONFromURL(url);
-        String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
-
-        /*for (String ID: listOfMatchIDs) {
-            player.addMatch(this.getMatchByID(ID));
+        if (acc.getCompetitive()) {
+            String url = "https://lol.fandom.com/api.php?action=cargoquery&format=json&tables=ScoreboardPlayers&fields=GameId,DateTime_UTC&where=Name=%22" + acc.getName().substring(acc.getName().indexOf(" ")+1) +  "%22+AND+DateTime_UTC%3E%27" + LocalDateTime.now().minusDays(DAYS) + "%27";
+            System.out.println(url);
+        } else {
+            String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + acc.getPuuid() + "/ids?startTime=" + Utils.getTimestampInSeconds(DAYS) + "&queue=420&count=100";
+            String jsonString = Utils.getJSONFromURL(url);
+            String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
+            for (String id: listOfMatchIDs) {
+                acc.addMatch(this.getMatch(id));
+            }
         }
-
-        System.out.println(Arrays.toString(listOfMatchIDs));*/
-
-        return null;
     }
 
-    public void addMatchListToSummoner(Player player) {
-/*
-        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + player.getPuuid() + "/ids?queue=420&start=0&count=10";
-        String jsonString = this.getJSONFromURL(url);
-        String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
+    public Match getMatch(String id) throws URISyntaxException, IOException, InterruptedException {
 
-        for (String ID: listOfMatchIDs) {
-//            player.addMatch(this.getMatchByID(ID));
-        }
+        String codedID = Utils.encodeString(id);
 
-        System.out.println(Arrays.toString(listOfMatchIDs));*/
-    }
-
-    public Match getMatchByID(String ID) {
-
-        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/" + ID;
+        String url = "https://europe.api.riotgames.com/lol/match/v5/matches/" + codedID;
         String jsonString = Utils.getJSONFromURL(url);
 
         return gson.fromJson(jsonString, Match.class);
     }
-
-
 }

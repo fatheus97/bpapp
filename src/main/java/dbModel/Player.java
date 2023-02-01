@@ -5,32 +5,29 @@ import java.util.List;
 
 public class Player implements Showable{
     private String name;
-    private Account tournamentAccount;
-    private List<Account> soloQAccounts = new ArrayList<>();
+    private List<Account> accounts = new ArrayList<>();
 
-    public Player(String name, Account tournamentAccount) {
+    public Player(String name) {
         this.name = name;
-        this.tournamentAccount = tournamentAccount;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setSoloQAccounts(List<Account> soloQAccounts) {
-        this.soloQAccounts = soloQAccounts;
+    public List<Account> getAccounts() {
+        return accounts;
     }
 
-    public List<Account> getSoloQAccounts() {
-        return soloQAccounts;
+    public void addAccount(Account acc) {
+        accounts.add(acc);
     }
 
     @Override
     public String toString() {
         return "Player{" +
                 "name='" + name + '\'' +
-                ", tournamentAccount=" + tournamentAccount +
-                ", soloQAccounts=" + soloQAccounts +
+                ", Accounts=" + accounts +
                 '}';
     }
 
@@ -42,7 +39,7 @@ public class Player implements Showable{
     @Override
     public List<String> getContent() {
         List<String> content = new ArrayList<>();
-        for (Account a : soloQAccounts) {
+        for (Account a : accounts) {
             content.add(a.getName());
         }
         return content;

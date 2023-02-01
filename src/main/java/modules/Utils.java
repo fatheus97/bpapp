@@ -14,9 +14,10 @@ import java.util.Date;
 
 public class Utils {
 
-    private static final String APIKEY = "RGAPI-523832c5-45cd-497b-8488-8c1130c4e038";
+    private static final String APIKEY = "RGAPI-9c2c4b81-ca1f-46ad-bf56-8eec15d398e8";
 
     public static String encodeString(String s) {
+        // TODO: 25/01/2023 change to whole URL splitting, encoding and joining again function 
         try {
             return new String(URLEncoder.encode(s, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -24,34 +25,16 @@ public class Utils {
         }
     }
 
-    public static Document getDocumentFromURL(String url) {
-        try {
-            return Jsoup.connect(url).header("X-Riot-Token", APIKEY).get();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public static Document getDocumentFromURL(String url) throws IOException {
+        return Jsoup.connect(url).header("X-Riot-Token", APIKEY).get();
     }
 
-    public static String getJSONFromURL(String url) {
-        URI uri = null;
-
-        try {
-            uri = new URI(url);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-
+    public static String getJSONFromURL(String url) throws URISyntaxException, IOException, InterruptedException {
+        URI uri = new URI(url);
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(uri).header("X-Riot-Token", APIKEY).build();
-        HttpResponse<String> httpResponse = null;
+        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        try {
-            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
 
         if (httpResponse.statusCode() != 200)
             throw new RuntimeException("Failed : HTTP Error code : " + httpResponse.statusCode());
@@ -59,12 +42,8 @@ public class Utils {
         return httpResponse.body();
     }
 
-    public static void main(String[] args) {
-
-    }
-
-    public static long getTimestampInSeconds() {
+    public static long getTimestampInSeconds(int days) {
         Date date = new Date();
-        return date.getTime()/1000-2592000;
+        return date.getTime()/1000-(days*24*60*60);
     }
 }
