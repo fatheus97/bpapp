@@ -1,4 +1,4 @@
-package apiModel;
+package apiModel.matchTimeline;
 
 import com.fasterxml.jackson.annotation.*;
 import java.util.List;

@@ -13,6 +13,14 @@ public class Organization implements Showable {
         this.shortcut = shortcut;
     }
 
+    public String getShortcut() {
+        return shortcut;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public Roster getRoster() {
         return roster;
     }

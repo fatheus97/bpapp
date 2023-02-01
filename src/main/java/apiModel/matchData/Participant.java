@@ -1,4 +1,4 @@
-package apiModel;
+package apiModel.matchData;
 
 import com.fasterxml.jackson.annotation.*;
 import java.util.Map;

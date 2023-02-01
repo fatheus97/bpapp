@@ -6,20 +6,21 @@
 //
 // Import this package:
 //
-//     import model.Converter;
+//     import apiModel.matchData.Converter;
 //
 // Then you can deserialize a JSON string with
 //
-//     Match data = Converter.fromJsonString(jsonString);
+//     MatchData data = Converter.fromJsonString(jsonString);
 
-package apiModel;
+package apiModel.matchData;
 
 import java.io.IOException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-
+import java.util.*;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
@@ -59,11 +60,11 @@ public class Converter {
     }
     // Serialize/deserialize helpers
 
-    public static Match fromJsonString(String json) throws IOException {
+    public static MatchData fromJsonString(String json) throws IOException {
         return getObjectReader().readValue(json);
     }
 
-    public static String toJsonString(Match obj) throws JsonProcessingException {
+    public static String toJsonString(MatchData obj) throws JsonProcessingException {
         return getObjectWriter().writeValueAsString(obj);
     }
 
@@ -73,6 +74,7 @@ public class Converter {
     private static void instantiateMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.findAndRegisterModules();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         SimpleModule module = new SimpleModule();
         module.addDeserializer(OffsetDateTime.class, new JsonDeserializer<OffsetDateTime>() {
@@ -83,8 +85,8 @@ public class Converter {
             }
         });
         mapper.registerModule(module);
-        reader = mapper.readerFor(Match.class);
-        writer = mapper.writerFor(Match.class);
+        reader = mapper.readerFor(MatchData.class);
+        writer = mapper.writerFor(MatchData.class);
     }
 
     private static ObjectReader getObjectReader() {

@@ -1,8 +1,8 @@
-package apiModel;
+package apiModel.matchTimeline;
 
 import com.fasterxml.jackson.annotation.*;
 
-public class Match {
+public class MatchTimeline {
     private Metadata metadata;
     private Info info;
 
