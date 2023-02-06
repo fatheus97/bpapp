@@ -3,7 +3,7 @@ package apiModel.matchTimeline;
 import com.fasterxml.jackson.annotation.*;
 import java.util.List;
 
-public class Info {
+public class Timeline {
     private long frameInterval;
     private List<Frame> frames;
     private long gameID;

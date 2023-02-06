@@ -1,10 +1,12 @@
 package apiModel.matchData;
 
 import com.fasterxml.jackson.annotation.*;
+import com.google.gson.annotations.SerializedName;
 
 public class MatchData {
     private Metadata metadata;
-    private Info info;
+    @SerializedName("info")
+    private Data data;
 
     @JsonProperty("metadata")
     public Metadata getMetadata() { return metadata; }
@@ -12,7 +14,7 @@ public class MatchData {
     public void setMetadata(Metadata value) { this.metadata = value; }
 
     @JsonProperty("info")
-    public Info getInfo() { return info; }
+    public Data getData() { return data; }
     @JsonProperty("info")
-    public void setInfo(Info value) { this.info = value; }
+    public void setData(Data value) { this.data = value; }
 }

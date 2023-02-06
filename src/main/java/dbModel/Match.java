@@ -1,14 +1,18 @@
 package dbModel;
 
-import apiModel.matchData.MatchData;
-import apiModel.matchTimeline.MatchTimeline;
+import apiModel.matchData.Data;
+import apiModel.matchData.Metadata;
+import apiModel.matchTimeline.Timeline;
 
 public class Match {
-    private MatchData matchData;
-    private MatchTimeline matchTimeline;
+    private Metadata metadata;
+    private Data data;
+    private Timeline timeline;
 
-    public Match(MatchData matchData, MatchTimeline matchTimeline) {
-        this.matchData = matchData;
-        this.matchTimeline = matchTimeline;
+
+    public Match(Metadata metadata, Data data, Timeline timeline) {
+        this.metadata = metadata;
+        this.data = data;
+        this.timeline = timeline;
     }
 }

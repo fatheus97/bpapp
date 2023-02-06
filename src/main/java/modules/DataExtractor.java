@@ -126,6 +126,6 @@ public class DataExtractor {
         String jsonStringTimeline = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/" + id + "/timeline");
         MatchTimeline matchTimeline = gson.fromJson(jsonStringTimeline, MatchTimeline.class);
 
-        return new Match(matchData, matchTimeline);
+        return new Match(matchData.getMetadata(), matchData.getData(), matchTimeline.getTimeline());
     }
 }

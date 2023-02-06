@@ -3,7 +3,7 @@ package apiModel.matchData;
 import com.fasterxml.jackson.annotation.*;
 import java.util.List;
 
-public class Info {
+public class Data {
     private long gameCreation;
     private long gameDuration;
     private long gameEndTimestamp;

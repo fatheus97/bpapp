@@ -1,18 +1,14 @@
 package apiModel.matchTimeline;
 
 import com.fasterxml.jackson.annotation.*;
+import com.google.gson.annotations.SerializedName;
 
 public class MatchTimeline {
-    private Metadata metadata;
-    private Info info;
-
-    @JsonProperty("metadata")
-    public Metadata getMetadata() { return metadata; }
-    @JsonProperty("metadata")
-    public void setMetadata(Metadata value) { this.metadata = value; }
+    @SerializedName("info")
+    private Timeline timeline;
 
     @JsonProperty("info")
-    public Info getInfo() { return info; }
+    public Timeline getTimeline() { return timeline; }
     @JsonProperty("info")
-    public void setInfo(Info value) { this.info = value; }
+    public void setTimeline(Timeline value) { this.timeline = value; }
 }

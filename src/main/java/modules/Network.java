@@ -13,7 +13,7 @@ import java.util.Arrays;
 
 public class Network {
 
-    private static final String APIKEY = "RGAPI-c2ae8e43-a23f-4ba9-8d18-675da13340f3";
+    private static final String APIKEY = "RGAPI-39f6b2d8-b23a-4864-bdc2-a6bf2fa5990c";
 
     public static String encodeURLString(String urlString) {
 
@@ -26,13 +26,11 @@ public class Network {
         String query = urlString.substring(endIndex);
 
         String[] queryArray = query.split("&");
-        System.out.println(Arrays.toString(queryArray));
 
         for (int i = 0; i < queryArray.length; i++) {
             queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(queryArray[i].substring(queryArray[i].indexOf("=") + 1));
         }
         query = String.join("&", queryArray);
-        System.out.println(baseURL + query);
         return baseURL + query;
     }
 
