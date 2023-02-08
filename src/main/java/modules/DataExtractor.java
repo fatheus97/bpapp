@@ -1,7 +1,9 @@
 package modules;
 
+import apiModel.matchData.Data;
 import apiModel.matchData.MatchData;
 import apiModel.matchTimeline.MatchTimeline;
+import apiModel.matchTimeline.Timeline;
 import dbModel.Match;
 import com.google.gson.*;
 import dbModel.Account;
@@ -13,12 +15,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 public class DataExtractor {
     private static final String TOURNAMENT = "LEC/2023 Season/Winter Season";
-    private static final int DAYS = 1;
+    private static final int DAYS = 7;
     private final Gson gson;
 
     public DataExtractor() {
@@ -74,7 +77,7 @@ public class DataExtractor {
         return org;
     }
 
-    private Player getPlayer(String playerName, Organization org) throws URISyntaxException, IOException, InterruptedException {
+    private Player getPlayer(String playerName, Organization org) {
 
         Player player = new Player(playerName);
         player.addAccount(new Account(org.getShortcut() + " " + playerName, true));
@@ -103,19 +106,55 @@ public class DataExtractor {
         return gson.fromJson(jsonString, Account.class);
     }
 
+    public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
+        DataExtractor dataExtractor = new DataExtractor();
+        Account acc = new Account("FNC Humanoid", true);
+        dataExtractor.getAccountMatches(acc);
+        System.out.println(acc);
+    }
+
     public void getAccountMatches(Account acc) throws URISyntaxException, IOException, InterruptedException {
 
         if (acc.getCompetitive()) {
-            // TODO: 01/02/2023 get competitive account matches
-            String url = "https://lol.fandom.com/api.php?action=cargoquery&format=json&tables=ScoreboardPlayers&fields=GameId,DateTime_UTC&where=Name=%22" + acc.getName().substring(acc.getName().indexOf(" ")+1) +  "%22+AND+DateTime_UTC%3E%27" + LocalDateTime.now().minusDays(DAYS) + "%27";
+            // TODO: 08/02/2023 deal with mutliple matches for team 
+            String jsonString = Network.getJSONFromURLString("https://lol.fandom.com/api.php?action=cargoquery" +
+                    "&format=json" +
+                    "&tables=ScoreboardPlayers=SP,ScoreboardGames=SG,PostgameJsonMetadata=PJM" +
+                    "&join_on=SP.GameId=SG.GameId,SG.RiotPlatformGameId=PJM.RiotPlatformGameId" +
+                    "&fields=PJM.StatsPage" +
+                    "&where=SP.Name='" + acc.getName().substring(acc.getName().indexOf(" ")+1) +
+                    "' AND SP.DateTime_UTC>" + Time.getUTCString(DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss")));
+            JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
+            jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
+                try {
+                    acc.addMatch(getMatchFromWiki(jsonElement.getAsJsonObject().get("title").getAsJsonObject().get("StatsPage").getAsString()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else {
             String jsonString = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + acc.getPuuid() + "/ids?startTime="
-                    + Time.getTimestampInSeconds(DAYS) + "&queue=420&count=100");
+                    + Time.getEpochInSeconds(DAYS) + "&queue=420&count=100");
             String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
             for (String id: listOfMatchIDs) {
                 acc.addMatch(this.getMatchFromRiot(id));
             }
         }
+
+    }
+
+    private Match getMatchFromWiki(String id) throws IOException {
+        Document documentData = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "?action=edit");
+        String jsonStringData = Objects.requireNonNull(documentData.getElementById("wpTextbox1")).text();
+        Data data = gson.fromJson(jsonStringData, Data.class);
+
+        Document documentTimeline = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "/Timeline?action=edit");
+        String jsonStringTimeline = Objects.requireNonNull(documentTimeline.getElementById("wpTextbox1")).text();
+        Timeline timeline = gson.fromJson(jsonStringTimeline, Timeline.class);
+
+        // TODO: 08/02/2023 add metadata creation 
+
+        return new Match(data, timeline);
     }
 
     public Match getMatchFromRiot(String id) throws URISyntaxException, IOException, InterruptedException {

@@ -15,4 +15,18 @@ public class Match {
         this.data = data;
         this.timeline = timeline;
     }
+
+    public Match(Data data, Timeline timeline) {
+        this.data = data;
+        this.timeline = timeline;
+    }
+
+    @Override
+    public String toString() {
+        return "Match{" +
+                "metadata=" + metadata +
+                ", data=" + data +
+                ", timeline=" + timeline +
+                '}';
+    }
 }

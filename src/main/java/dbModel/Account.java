@@ -17,6 +17,7 @@ public class Account {
     public Account(String name, Boolean competitive) {
         this.name = name;
         this.competitive = competitive;
+        this.matches = new ArrayList<>();
     }
 
     public String getName() {
