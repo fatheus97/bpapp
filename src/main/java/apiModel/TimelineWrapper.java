@@ -1,9 +1,10 @@
-package apiModel.matchTimeline;
+package apiModel;
 
+import dbModel.Timeline;
 import com.fasterxml.jackson.annotation.*;
 import com.google.gson.annotations.SerializedName;
 
-public class MatchTimeline {
+public class TimelineWrapper {
     @SerializedName("info")
     private Timeline timeline;
 

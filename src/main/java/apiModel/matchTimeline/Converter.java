@@ -15,12 +15,13 @@
 package apiModel.matchTimeline;
 
 import java.io.IOException;
+
+import apiModel.TimelineWrapper;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.*;
-import java.time.LocalDate;
+
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
@@ -60,11 +61,11 @@ public class Converter {
     }
     // Serialize/deserialize helpers
 
-    public static MatchTimeline fromJsonString(String json) throws IOException {
+    public static TimelineWrapper fromJsonString(String json) throws IOException {
         return getObjectReader().readValue(json);
     }
 
-    public static String toJsonString(MatchTimeline obj) throws JsonProcessingException {
+    public static String toJsonString(TimelineWrapper obj) throws JsonProcessingException {
         return getObjectWriter().writeValueAsString(obj);
     }
 
@@ -85,8 +86,8 @@ public class Converter {
             }
         });
         mapper.registerModule(module);
-        reader = mapper.readerFor(MatchTimeline.class);
-        writer = mapper.writerFor(MatchTimeline.class);
+        reader = mapper.readerFor(TimelineWrapper.class);
+        writer = mapper.writerFor(TimelineWrapper.class);
     }
 
     private static ObjectReader getObjectReader() {

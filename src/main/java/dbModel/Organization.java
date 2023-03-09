@@ -3,6 +3,7 @@ package dbModel;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: 09.03.2023 hibernate annotation 
 public class Organization implements Showable {
     private String name;
     private String shortcut;

@@ -1,9 +1,11 @@
-package apiModel.matchData;
+package apiModel;
 
 import com.fasterxml.jackson.annotation.*;
 import com.google.gson.annotations.SerializedName;
+import dbModel.Data;
+import dbModel.Metadata;
 
-public class MatchData {
+public class DataWrapper {
     private Metadata metadata;
     @SerializedName("info")
     private Data data;

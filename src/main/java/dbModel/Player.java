@@ -1,14 +1,22 @@
 package dbModel;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-
-public class Player implements Showable{
+@Entity
+@Table(name = "players")
+public class Player implements Showable {
+    @Id
     private String name;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "player")
     private List<Account> accounts = new ArrayList<>();
 
     public Player(String name) {
         this.name = name;
+    }
+
+    public Player() {
+
     }
 
     public String getName() {

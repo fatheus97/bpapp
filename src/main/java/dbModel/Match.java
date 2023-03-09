@@ -1,12 +1,21 @@
 package dbModel;
 
-import apiModel.matchData.Data;
-import apiModel.matchData.Metadata;
-import apiModel.matchTimeline.Timeline;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "matches")
 public class Match {
-    private Metadata metadata;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @ManyToMany(mappedBy = "matches")
+    private List<Account> participants;
+    @OneToOne(cascade = CascadeType.ALL)
+    private Metadata metadata; // TODO: 09.03.2023 metadata dataModel 
+    @OneToOne(cascade = CascadeType.ALL)
     private Data data;
+    @OneToOne(cascade = CascadeType.ALL)
     private Timeline timeline;
 
 
@@ -19,6 +28,10 @@ public class Match {
     public Match(Data data, Timeline timeline) {
         this.data = data;
         this.timeline = timeline;
+    }
+
+    public Match() {
+
     }
 
     @Override

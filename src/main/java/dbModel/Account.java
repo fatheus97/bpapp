@@ -1,23 +1,28 @@
 package dbModel;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-
+@Entity
+@Table(name = "accounts")
 public class Account {
+    @Id
     private String puuid;
     private String name;
-    private List<Match> matches;
+    @ManyToOne
+    private Player player;
+    @ManyToMany(mappedBy = "participants")
+    private List<Match> matches = new ArrayList<>();
     private Boolean competitive;
 
     public Account() {
-        matches = new ArrayList<>();
         competitive = false;
     }
 
-    public Account(String name, Boolean competitive) {
+    public Account(String name, Boolean competitive, Player player) {
         this.name = name;
         this.competitive = competitive;
-        this.matches = new ArrayList<>();
+        this.player = player;
     }
 
     public String getName() {
