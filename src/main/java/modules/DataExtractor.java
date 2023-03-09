@@ -1,9 +1,9 @@
 package modules;
 
-import apiModel.matchData.Data;
-import apiModel.matchData.MatchData;
-import apiModel.matchTimeline.MatchTimeline;
-import apiModel.matchTimeline.Timeline;
+import dbModel.Data;
+import apiModel.DataWrapper;
+import apiModel.TimelineWrapper;
+import dbModel.Timeline;
 import dbModel.Match;
 import com.google.gson.*;
 import dbModel.Account;
@@ -80,7 +80,7 @@ public class DataExtractor {
     private Player getPlayer(String playerName, Organization org) {
 
         Player player = new Player(playerName);
-        player.addAccount(new Account(org.getShortcut() + " " + playerName, true));
+        player.addAccount(new Account(org.getShortcut() + " " + playerName, true, player));
 
         return player;
     }
@@ -106,11 +106,7 @@ public class DataExtractor {
         return gson.fromJson(jsonString, Account.class);
     }
 
-    public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-        DataExtractor dataExtractor = new DataExtractor();
-        Account acc = new Account("FNC Humanoid", true);
-        dataExtractor.getAccountMatches(acc);
-        System.out.println(acc);
+    public static void main(String[] args) {
     }
 
     public void getAccountMatches(Account acc) throws URISyntaxException, IOException, InterruptedException {
@@ -160,11 +156,11 @@ public class DataExtractor {
     public Match getMatchFromRiot(String id) throws URISyntaxException, IOException, InterruptedException {
 
         String jsonStringData = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/" + id);
-        MatchData matchData = gson.fromJson(jsonStringData, MatchData.class);
+        DataWrapper dataWrapper = gson.fromJson(jsonStringData, DataWrapper.class);
 
         String jsonStringTimeline = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/" + id + "/timeline");
-        MatchTimeline matchTimeline = gson.fromJson(jsonStringTimeline, MatchTimeline.class);
+        TimelineWrapper timelineWrapper = gson.fromJson(jsonStringTimeline, TimelineWrapper.class);
 
-        return new Match(matchData.getMetadata(), matchData.getData(), matchTimeline.getTimeline());
+        return new Match(dataWrapper.getMetadata(), dataWrapper.getData(), timelineWrapper.getTimeline());
     }
 }
