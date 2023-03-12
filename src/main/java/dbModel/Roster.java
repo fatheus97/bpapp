@@ -1,14 +1,26 @@
 package dbModel;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: 09.03.2023 hibernate annotation
-public class Roster {
+@Entity
+@Table(name = "rosters")
+public class Roster implements Insertable{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @ManyToOne
+    private Organization org;
+    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player top;
+    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player jungle;
+    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player mid;
+    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player bot;
+    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player support;
 
     public Player getTop() {

@@ -1,17 +1,33 @@
 package dbModel;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
-// TODO: 09.03.2023 hibernate annotation 
-public class Organization implements Showable {
+@Entity
+@Table(name = "organizations")
+public class Organization implements Showable, Insertable {
+    @Id
     private String name;
     private String shortcut;
-    private Roster roster;
+    @OneToMany(mappedBy = "org", cascade = CascadeType.ALL)
+    private Stack<Roster> rosters = new Stack<>();
 
     public Organization(String name, String shortcut) {
         this.name = name;
         this.shortcut = shortcut;
+    }
+
+    public Organization() {
+    }
+
+    public Roster getRoster() {
+        return rosters.peek();
+    }
+
+    public void addRoster(Roster roster) {
+        rosters.push(roster);
     }
 
     public String getShortcut() {
@@ -22,20 +38,12 @@ public class Organization implements Showable {
         return name;
     }
 
-    public Roster getRoster() {
-        return roster;
-    }
-
-    public void setRoster(Roster roster) {
-        this.roster = roster;
-    }
-
     @Override
     public String toString() {
         return "Organization{" +
                 "name='" + name + '\'' +
                 ", shortcut='" + shortcut + '\'' +
-                ", roster=" + roster +
+                ", rosters=" + rosters +
                 '}';
     }
 
@@ -47,7 +55,7 @@ public class Organization implements Showable {
     @Override
     public List<String> getContent() {
         List<String> content = new ArrayList<>();
-        List<Player> players = roster.getPlayers();
+        List<Player> players = rosters.peek().getPlayers();
         for (Player p : players) {
             content.add(p.getName());
         }

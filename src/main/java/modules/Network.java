@@ -12,7 +12,7 @@ import java.net.http.HttpResponse;
 
 public class Network {
 
-    private static final String APIKEY = "RGAPI-39f6b2d8-b23a-4864-bdc2-a6bf2fa5990c";
+    private static final String APIKEY = "RGAPI-87447b91-cfc3-47dc-9e60-5a1b9eb94c10";
 
     public static String encodeURLString(String urlString) {
 

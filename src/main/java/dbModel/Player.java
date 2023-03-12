@@ -5,14 +5,17 @@ import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Table(name = "players")
-public class Player implements Showable {
+public class Player implements Showable, Insertable {
     @Id
     private String name;
+    @OneToOne
+    private Roster roster;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "player")
     private List<Account> accounts = new ArrayList<>();
 
-    public Player(String name) {
+    public Player(String name, Roster roster) {
         this.name = name;
+        this.roster = roster;
     }
 
     public Player() {

@@ -1,32 +1,33 @@
 package dbModel;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "matches")
-public class Match {
+public class Match implements Insertable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToMany(mappedBy = "matches")
-    private List<Account> participants;
+    @ManyToMany
+    private List<Account> participants = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL)
-    private Metadata metadata; // TODO: 09.03.2023 metadata dataModel 
+    private Metadata metadata;
     @OneToOne(cascade = CascadeType.ALL)
-    private Data data;
+    private Info info;
     @OneToOne(cascade = CascadeType.ALL)
     private Timeline timeline;
 
 
-    public Match(Metadata metadata, Data data, Timeline timeline) {
+    public Match(Metadata metadata, Info info, Timeline timeline) {
         this.metadata = metadata;
-        this.data = data;
+        this.info = info;
         this.timeline = timeline;
     }
 
-    public Match(Data data, Timeline timeline) {
-        this.data = data;
+    public Match(Info info, Timeline timeline) {
+        this.info = info;
         this.timeline = timeline;
     }
 
@@ -38,7 +39,7 @@ public class Match {
     public String toString() {
         return "Match{" +
                 "metadata=" + metadata +
-                ", data=" + data +
+                ", data=" + info +
                 ", timeline=" + timeline +
                 '}';
     }

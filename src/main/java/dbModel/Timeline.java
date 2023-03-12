@@ -6,7 +6,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "timelines")
-public class Timeline {
+public class Timeline implements Insertable {
     @Id
     private long gameID;
 }

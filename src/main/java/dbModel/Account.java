@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Table(name = "accounts")
-public class Account {
+public class Account implements Insertable {
     @Id
-    private String puuid;
     private String name;
+    private String puuid;
     @ManyToOne
     private Player player;
     @ManyToMany(mappedBy = "participants")
@@ -22,6 +22,14 @@ public class Account {
     public Account(String name, Boolean competitive, Player player) {
         this.name = name;
         this.competitive = competitive;
+        this.player = player;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
         this.player = player;
     }
 

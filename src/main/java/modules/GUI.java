@@ -4,7 +4,7 @@ import dbModel.Showable;
 
 public class GUI {
 
-    public void showData(Showable data) {
+    public static void showData(Showable data) {
 
     }
 }

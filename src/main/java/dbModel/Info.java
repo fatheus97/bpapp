@@ -5,8 +5,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "metadatas")
-public class Metadata implements Insertable{
+@Table(name = "infos")
+public class Info implements Insertable{
     @Id
-    private long matchID;
+    private long gameID;
 }

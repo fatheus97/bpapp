@@ -1,6 +1,7 @@
 import dbModel.Organization;
 import dbModel.Player;
 import modules.DataExtractor;
+import modules.DataInserter;
 import modules.GUI;
 
 import java.io.IOException;
@@ -9,43 +10,34 @@ import java.util.List;
 
 public class Controller {
 
-    private final DataExtractor dataExtractor = new DataExtractor();
-    private final GUI gui = new GUI();
-
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
 
-        new Controller();
+        Organization org = DataExtractor.getOrganization("MAD Lions");
 
-    }
+        GUI.showData(org);
 
-    public Controller() throws URISyntaxException, IOException, InterruptedException {
-
-        Organization org = dataExtractor.getOrganization("MAD Lions");
-
-        gui.showData(org);
-
-        org = dataExtractor.getOrganizationPlayers(org);
+        DataExtractor.getOrganizationPlayers(org);
 
         List<Player> players = org.getRoster().getPlayers();
 
         for (Player p : players) {
-            gui.showData(p);
+            GUI.showData(p);
         }
 
         org.getRoster().getPlayers().forEach(player -> {
             player.getAccounts().forEach(acc -> {
                 try {
-                    dataExtractor.getAccountMatches(acc);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
+                    DataExtractor.getAccountMatches(acc);
+                } catch (URISyntaxException | IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             });
         });
 
+        DataInserter.openSessionFactory();
+        DataInserter.insertObject(org);
+        DataInserter.closeSessionFactory();
         System.out.println(org);
+
     }
 }

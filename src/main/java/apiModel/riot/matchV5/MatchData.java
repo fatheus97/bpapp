@@ -1,14 +1,10 @@
-package apiModel;
+package apiModel.riot.matchV5;
 
 import com.fasterxml.jackson.annotation.*;
-import com.google.gson.annotations.SerializedName;
-import dbModel.Data;
-import dbModel.Metadata;
 
-public class DataWrapper {
+public class MatchData {
     private Metadata metadata;
-    @SerializedName("info")
-    private Data data;
+    private Info info;
 
     @JsonProperty("metadata")
     public Metadata getMetadata() { return metadata; }
@@ -16,7 +12,7 @@ public class DataWrapper {
     public void setMetadata(Metadata value) { this.metadata = value; }
 
     @JsonProperty("info")
-    public Data getData() { return data; }
+    public Info getInfo() { return info; }
     @JsonProperty("info")
-    public void setData(Data value) { this.data = value; }
+    public void setInfo(Info value) { this.info = value; }
 }

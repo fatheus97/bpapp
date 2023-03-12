@@ -1,4 +1,4 @@
-package apiModel;
+package dbModel;
 
 import dbModel.Timeline;
 import com.fasterxml.jackson.annotation.*;

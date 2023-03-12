@@ -1,9 +1,9 @@
-package apiModel.matchData;
+package apiModel.riot.matchV5;
 
 import com.fasterxml.jackson.annotation.*;
 import java.util.List;
 
-public class Data {
+public class Info {
     private long gameCreation;
     private long gameDuration;
     private long gameEndTimestamp;
