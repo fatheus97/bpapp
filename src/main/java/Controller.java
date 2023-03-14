@@ -37,7 +37,6 @@ public class Controller {
         DataInserter.openSessionFactory();
         DataInserter.insertObject(org);
         DataInserter.closeSessionFactory();
-        System.out.println(org);
 
     }
 }

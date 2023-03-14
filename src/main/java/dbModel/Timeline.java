@@ -1,12 +1,15 @@
 package dbModel;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.hibernate.annotations.NaturalId;
+
+import javax.persistence.*;
 
 @Entity
 @Table(name = "timelines")
 public class Timeline implements Insertable {
     @Id
-    private long gameID;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @OneToOne(mappedBy = "timeline")
+    private Match match;
 }

@@ -1,5 +1,7 @@
 package dbModel;
 
+import org.hibernate.annotations.NaturalId;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +11,14 @@ import java.util.Stack;
 @Table(name = "organizations")
 public class Organization implements Showable, Insertable {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NaturalId
     private String name;
+    @NaturalId
     private String shortcut;
     @OneToMany(mappedBy = "org", cascade = CascadeType.ALL)
-    private Stack<Roster> rosters = new Stack<>();
+    private List<Roster> rosters = new ArrayList<>();
 
     public Organization(String name, String shortcut) {
         this.name = name;
@@ -23,11 +29,11 @@ public class Organization implements Showable, Insertable {
     }
 
     public Roster getRoster() {
-        return rosters.peek();
+        return rosters.get(0);
     }
 
     public void addRoster(Roster roster) {
-        rosters.push(roster);
+        rosters.add(0, roster);
     }
 
     public String getShortcut() {
@@ -55,7 +61,7 @@ public class Organization implements Showable, Insertable {
     @Override
     public List<String> getContent() {
         List<String> content = new ArrayList<>();
-        List<Player> players = rosters.peek().getPlayers();
+        List<Player> players = rosters.get(0).getPlayers();
         for (Player p : players) {
             content.add(p.getName());
         }

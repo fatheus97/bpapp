@@ -1,5 +1,8 @@
 package dbModel;
 
+import com.google.gson.annotations.Expose;
+import org.hibernate.annotations.NaturalId;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,11 +10,18 @@ import java.util.List;
 @Table(name = "accounts")
 public class Account implements Insertable {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NaturalId
     private String name;
+    @NaturalId
     private String puuid;
     @ManyToOne
     private Player player;
-    @ManyToMany(mappedBy = "participants")
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "accounts_matches",
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "match_id"))
     private List<Match> matches = new ArrayList<>();
     private Boolean competitive;
 
@@ -52,9 +62,12 @@ public class Account implements Insertable {
     @Override
     public String toString() {
         return "Account{" +
-                "puuid='" + puuid + '\'' +
+                "id=" + id +
                 ", name='" + name + '\'' +
+                ", puuid='" + puuid + '\'' +
+                ", player=" + player +
                 ", matches=" + matches +
+                ", competitive=" + competitive +
                 '}';
     }
 

@@ -22,14 +22,23 @@ import java.util.Objects;
 public class DataExtractor {
     private static final String TOURNAMENT = "LEC/2023 Season/Winter Season";
     private static final int DAYS = 1;
-    private static final GsonBuilder gsonBuilder = new GsonBuilder();
+    private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
+        @Override
+        public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+            return Objects.equals(fieldAttributes.getName(), "id");
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> aClass) {
+            return false;
+        }
+    });
     private static final Gson gson = gsonBuilder.create();
 
     public static Organization getOrganization(String name) throws URISyntaxException, IOException, InterruptedException {
 
         Organization organization = new Organization(name, getOrganizationShortcut(name));
-        Roster roster = getRoster(organization);
-        organization.addRoster(roster);
+        organization.addRoster(getRoster(organization));
 
         return organization;
     }
@@ -45,6 +54,7 @@ public class DataExtractor {
     private static Roster getRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
 
         Roster roster = new Roster();
+        roster.setOrg(org);
 
         String jsonString = Network.getJSONFromURLString("https://lol.fandom.com/api.php?action=cargoquery&format=json&tables=TournamentRosters&fields=RosterLinks&where=TournamentRosters.Team='"
                 + org.getName() + "' AND TournamentRosters.OverviewPage='" + TOURNAMENT + "'");
@@ -53,11 +63,11 @@ public class DataExtractor {
 
         String[] playerArray = rosterString.split(";;");
 
-        roster.setTop(getPlayer(playerArray[0], org));
-        roster.setJungle(getPlayer(playerArray[1], org));
-        roster.setMid(getPlayer(playerArray[2], org));
-        roster.setBot(getPlayer(playerArray[3], org));
-        roster.setSupport(getPlayer(playerArray[4], org));
+        roster.setTop(getPlayer(playerArray[0], roster));
+        roster.setJungle(getPlayer(playerArray[1], roster));
+        roster.setMid(getPlayer(playerArray[2], roster));
+        roster.setBot(getPlayer(playerArray[3], roster));
+        roster.setSupport(getPlayer(playerArray[4], roster));
 
         return roster;
     }
@@ -71,10 +81,10 @@ public class DataExtractor {
         }
     }
 
-    private static Player getPlayer(String playerName, Organization org) {
+    private static Player getPlayer(String playerName, Roster roster) {
 
-        Player player = new Player(playerName, org.getRoster());
-        player.addAccount(new Account(org.getShortcut() + " " + playerName, true, player));
+        Player player = new Player(playerName, roster);
+        player.addAccount(new Account(roster.getOrg().getShortcut() + " " + playerName, true, player));
 
         return player;
     }
@@ -108,7 +118,7 @@ public class DataExtractor {
     public static void getAccountMatches(Account acc) throws URISyntaxException, IOException, InterruptedException {
 
         if (acc.getCompetitive()) {
-            // TODO: 08/02/2023 deal with mutliple matches for team 
+            // TODO: 08/02/2023 deal with multiple matches for team
             String jsonString = Network.getJSONFromURLString("https://lol.fandom.com/api.php?action=cargoquery" +
                     "&format=json" +
                     "&tables=ScoreboardPlayers=SP,ScoreboardGames=SG,PostgameJsonMetadata=PJM" +
@@ -119,7 +129,7 @@ public class DataExtractor {
             JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
             jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
                 try {
-                    acc.addMatch(getMatchFromWiki(jsonElement.getAsJsonObject().get("title").getAsJsonObject().get("StatsPage").getAsString()));
+                    acc.addMatch(getMatchFromWiki(jsonElement.getAsJsonObject().get("title").getAsJsonObject().get("StatsPage").getAsString(), acc));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -135,7 +145,7 @@ public class DataExtractor {
 
     }
 
-    private static Match getMatchFromWiki(String id) throws IOException {
+    private static Match getMatchFromWiki(String id, Account account) throws IOException {
         Document documentData = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "?action=edit");
         String jsonStringData = Objects.requireNonNull(documentData.getElementById("wpTextbox1")).text();
         Info info = gson.fromJson(jsonStringData, Info.class);
@@ -146,7 +156,7 @@ public class DataExtractor {
 
         // TODO: 08/02/2023 add metadata creation 
 
-        return new Match(info, timeline);
+        return new Match(info, timeline, account);
     }
 
     public static Match getMatchFromRiot(String id) throws URISyntaxException, IOException, InterruptedException {

@@ -23,6 +23,14 @@ public class Roster implements Insertable{
     @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
     private Player support;
 
+    public Organization getOrg() {
+        return org;
+    }
+
+    public void setOrg(Organization org) {
+        this.org = org;
+    }
+
     public Player getTop() {
         return top;
     }

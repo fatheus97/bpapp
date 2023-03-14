@@ -24,7 +24,7 @@ public class DataInserter {
         Transaction transaction = session.beginTransaction();
 
         // Save the match object to the database
-        session.save(obj);
+        session.saveOrUpdate(obj);
 
         // Commit the transaction
         transaction.commit();

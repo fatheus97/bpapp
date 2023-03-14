@@ -10,8 +10,8 @@ public class Match implements Insertable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToMany
-    private List<Account> participants = new ArrayList<>();
+    @ManyToMany(mappedBy = "matches")
+    private List<Account> accounts = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL)
     private Metadata metadata;
     @OneToOne(cascade = CascadeType.ALL)
@@ -26,9 +26,10 @@ public class Match implements Insertable {
         this.timeline = timeline;
     }
 
-    public Match(Info info, Timeline timeline) {
+    public Match(Info info, Timeline timeline, Account participant) {
         this.info = info;
         this.timeline = timeline;
+        this.accounts.add(participant);
     }
 
     public Match() {
@@ -38,8 +39,10 @@ public class Match implements Insertable {
     @Override
     public String toString() {
         return "Match{" +
-                "metadata=" + metadata +
-                ", data=" + info +
+                "id=" + id +
+                ", accounts=" + accounts +
+                ", metadata=" + metadata +
+                ", info=" + info +
                 ", timeline=" + timeline +
                 '}';
     }
