@@ -1,6 +1,6 @@
 package dbModel;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,20 +8,13 @@ import java.util.List;
 @Table(name = "rosters")
 public class Roster implements Insertable{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @ManyToOne
+    private Integer nOfChanges;
+    @ManyToOne(cascade = CascadeType.MERGE)
     private Organization org;
-    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
-    private Player top;
-    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
-    private Player jungle;
-    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
-    private Player mid;
-    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
-    private Player bot;
-    @OneToOne(mappedBy = "roster", cascade = CascadeType.ALL)
-    private Player support;
+    @ManyToMany(cascade = CascadeType.ALL)
+    private List<Player> players = new ArrayList<>();
 
     public Organization getOrg() {
         return org;
@@ -31,65 +24,23 @@ public class Roster implements Insertable{
         this.org = org;
     }
 
-    public Player getTop() {
-        return top;
-    }
-
-    public Player getJungle() {
-        return jungle;
-    }
-
-    public Player getMid() {
-        return mid;
-    }
-
-    public Player getBot() {
-        return bot;
-    }
-
-    public Player getSupport() {
-        return support;
-    }
-
-    public List<Player> getPlayers() {
-        List<Player> players = new ArrayList<>();
-        players.add(getTop());
-        players.add(getJungle());
-        players.add(getMid());
-        players.add(getBot());
-        players.add(getSupport());
-
-        return players;
-    }
-
-    public void setTop(Player top) {
-        this.top = top;
-    }
-
-    public void setJungle(Player jungle) {
-        this.jungle = jungle;
-    }
-
-    public void setMid(Player mid) {
-        this.mid = mid;
-    }
-
-    public void setBot(Player bot) {
-        this.bot = bot;
-    }
-
-    public void setSupport(Player support) {
-        this.support = support;
+    public void setNOfChanges(Integer nOfChanges) {
+        this.nOfChanges = nOfChanges;
     }
 
     @Override
     public String toString() {
-        return "Roster{" + "\n" +
-                "top=" + top + ",\n" +
-                "jungle=" + jungle + ",\n" +
-                "mid=" + mid + ",\n" +
-                "bot=" + bot + ",\n" +
-                "support=" + support + "\n" +
+        return "Roster{" +
+                "id=" + id +
+                ", players=" + players +
                 '}';
+    }
+
+    public void addPlayer(Player player) {
+        this.players.add(player);
+    }
+
+    public List<Player> getPlayers() {
+        return players;
     }
 }

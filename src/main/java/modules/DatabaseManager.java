@@ -1,25 +1,22 @@
 package modules;
 
 import dbModel.Insertable;
-import dbModel.Player;
-import dbModel.Roster;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
-public class DataInserter {
+public class DatabaseManager {
     private static final Configuration configuration = new Configuration().configure();
-    private static SessionFactory sessionFactory;
+    private static final SessionFactory sessionFactory = configuration.buildSessionFactory();
+
+    private static Session session;
 
     public static void main(String[] args) {
-        openSessionFactory();
-        insertObject(new Player("Rigi", new Roster()));
+
     }
 
     public static void insertObject(Insertable obj) {
-        Session session = sessionFactory.openSession();
-
         // Begin a new transaction
         Transaction transaction = session.beginTransaction();
 
@@ -33,11 +30,17 @@ public class DataInserter {
         session.close();
     }
 
-    public static void openSessionFactory() {
-        sessionFactory = configuration.buildSessionFactory();
+    public static void openSession() {
+        session = sessionFactory.openSession();
     }
-
+    public static void closeSession() {
+        session.close();
+    }
     public static void closeSessionFactory() {
         sessionFactory.close();
+    }
+    public static <T> T getObject(Class<T> objectClass, String objectID) {
+        T object = session.get(objectClass, objectID);
+        return object;
     }
 }

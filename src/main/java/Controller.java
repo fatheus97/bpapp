@@ -1,42 +1,52 @@
 import dbModel.Organization;
 import dbModel.Player;
 import modules.DataExtractor;
-import modules.DataInserter;
+import modules.DatabaseManager;
 import modules.GUI;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
 public class Controller {
-
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
 
-        Organization org = DataExtractor.getOrganization("MAD Lions");
+        String orgName = "Fnatic";
+
+        DatabaseManager.openSession();
+
+        Organization org = DatabaseManager.getObject(Organization.class, orgName);
+
+        if (org != null){
+            DataExtractor.updateOrganization(org);
+        } else {
+            org = DataExtractor.getOrganization(orgName);
+        }
 
         GUI.showData(org);
 
-        DataExtractor.getOrganizationPlayers(org);
+        DataExtractor.fetchAccountsToPlayers(org);
 
-        List<Player> players = org.getRoster().getPlayers();
+            List<Player> players = org.getRoster().getPlayers();
 
-        for (Player p : players) {
-            GUI.showData(p);
-        }
+            for (Player p : players) {
+                GUI.showData(p);
+            }
 
-        org.getRoster().getPlayers().forEach(player -> {
-            player.getAccounts().forEach(acc -> {
-                try {
-                    DataExtractor.getAccountMatches(acc);
-                } catch (URISyntaxException | IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+            players.forEach(player -> {
+                player.getAccounts().forEach(acc -> {
+                    try {
+                        DataExtractor.getAccountMatches(acc);
+                    } catch (URISyntaxException | IOException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             });
-        });
 
-        DataInserter.openSessionFactory();
-        DataInserter.insertObject(org);
-        DataInserter.closeSessionFactory();
+
+        DatabaseManager.insertObject(org);
+
+        DatabaseManager.closeSession();
+        DatabaseManager.closeSessionFactory();
 
     }
 }

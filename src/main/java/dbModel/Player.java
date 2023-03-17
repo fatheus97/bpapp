@@ -1,30 +1,32 @@
 package dbModel;
 
-import org.hibernate.annotations.NaturalId;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Table(name = "players")
 public class Player implements Showable, Insertable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @NaturalId
     private String name;
-    @OneToOne
-    private Roster roster;
+    @Enumerated(EnumType.STRING)
+    private Role role;
+    @ManyToMany(mappedBy = "players")
+    private List<Roster> rosters = new ArrayList<>();
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "player")
     private List<Account> accounts = new ArrayList<>();
 
-    public Player(String name, Roster roster) {
+    public Player(String name, Role role, Roster roster) {
         this.name = name;
-        this.roster = roster;
+        this.role = role;
+        this.rosters.add(roster);
     }
 
     public Player() {
 
+    }
+
+    public Role getRole() {
+        return role;
     }
 
     public String getName() {
@@ -43,7 +45,8 @@ public class Player implements Showable, Insertable {
     public String toString() {
         return "Player{" +
                 "name='" + name + '\'' +
-                ", Accounts=" + accounts +
+                ", role=" + role +
+                ", accounts=" + accounts +
                 '}';
     }
 

@@ -3,17 +3,25 @@ package modules;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Properties;
 
 public class Network {
-
-    private static final String APIKEY = "RGAPI-87447b91-cfc3-47dc-9e60-5a1b9eb94c10";
-
+    private static final Properties props = new Properties();
+    static {
+        try {
+            props.load(Network.class.getResourceAsStream("/config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static final String APIKEY = props.getProperty("api.key");
     public static String encodeURLString(String urlString) {
 
         int endIndex;

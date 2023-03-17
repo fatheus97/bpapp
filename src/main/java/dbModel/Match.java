@@ -1,6 +1,8 @@
 package dbModel;
 
-import javax.persistence.*;
+import org.hibernate.annotations.NaturalId;
+
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,25 +10,16 @@ import java.util.List;
 @Table(name = "matches")
 public class Match implements Insertable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String matchID;
     @ManyToMany(mappedBy = "matches")
     private List<Account> accounts = new ArrayList<>();
-    @OneToOne(cascade = CascadeType.ALL)
-    private Metadata metadata;
     @OneToOne(cascade = CascadeType.ALL)
     private Info info;
     @OneToOne(cascade = CascadeType.ALL)
     private Timeline timeline;
 
-
-    public Match(Metadata metadata, Info info, Timeline timeline) {
-        this.metadata = metadata;
-        this.info = info;
-        this.timeline = timeline;
-    }
-
-    public Match(Info info, Timeline timeline, Account participant) {
+    public Match(String matchID, Info info, Timeline timeline, Account participant) {
+        this.matchID = matchID;
         this.info = info;
         this.timeline = timeline;
         this.accounts.add(participant);
@@ -36,12 +29,14 @@ public class Match implements Insertable {
 
     }
 
+    public String getMatchID() {
+        return matchID;
+    }
+
     @Override
     public String toString() {
         return "Match{" +
-                "id=" + id +
-                ", accounts=" + accounts +
-                ", metadata=" + metadata +
+                "matchID='" + matchID + '\'' +
                 ", info=" + info +
                 ", timeline=" + timeline +
                 '}';

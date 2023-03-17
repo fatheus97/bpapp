@@ -3,16 +3,13 @@ package dbModel;
 import com.google.gson.annotations.Expose;
 import org.hibernate.annotations.NaturalId;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
 @Table(name = "accounts")
 public class Account implements Insertable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @NaturalId
     private String name;
     @NaturalId
     private String puuid;
@@ -62,10 +59,8 @@ public class Account implements Insertable {
     @Override
     public String toString() {
         return "Account{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", puuid='" + puuid + '\'' +
-                ", player=" + player +
                 ", matches=" + matches +
                 ", competitive=" + competitive +
                 '}';

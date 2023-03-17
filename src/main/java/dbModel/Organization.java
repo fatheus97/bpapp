@@ -2,7 +2,7 @@ package dbModel;
 
 import org.hibernate.annotations.NaturalId;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -11,9 +11,6 @@ import java.util.Stack;
 @Table(name = "organizations")
 public class Organization implements Showable, Insertable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @NaturalId
     private String name;
     @NaturalId
     private String shortcut;
