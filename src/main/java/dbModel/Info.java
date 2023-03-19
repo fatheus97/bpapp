@@ -2,7 +2,6 @@ package dbModel;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
-import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.*;
 
@@ -14,6 +13,7 @@ public class Info implements Insertable {
     private long gameID;
     @OneToOne(mappedBy = "info")
     private Match match;
+    private long gameCreation;
 
     @JsonProperty("gameId")
     public long getGameID() { return gameID; }

@@ -1,7 +1,5 @@
 package dbModel;
 
-import org.hibernate.annotations.NaturalId;
-
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;

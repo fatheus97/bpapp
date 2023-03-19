@@ -1,18 +1,22 @@
 package modules;
 
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Properties;
 
 public class Network {
+    private static int count = 0;
     private static final Properties props = new Properties();
     static {
         try {
@@ -22,6 +26,10 @@ public class Network {
         }
     }
     private static final String APIKEY = props.getProperty("api.key");
+    private static final Bucket riotBucket = Bucket.builder()
+            .addLimit(Bandwidth.classic(20, Refill.intervally(20, Duration.ofSeconds(1))))
+            .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofSeconds(135))))
+            .build();
     public static String encodeURLString(String urlString) {
 
         int endIndex;
@@ -46,11 +54,18 @@ public class Network {
     }
 
     public static String getJSONFromURLString(String urlString) throws URISyntaxException, IOException, InterruptedException {
+
         URI uri = new URI(encodeURLString(urlString));
         HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(uri).header("X-Riot-Token", APIKEY).build();
+        HttpRequest httpRequest = HttpRequest.newBuilder(uri).build();
+        if(urlString.contains("api.riotgames.com")){
+            httpRequest = HttpRequest.newBuilder(uri)
+                    .header("X-Riot-Token", APIKEY)
+                    .build();
+            riotBucket.asBlocking().consume(1);
+            System.out.println(count++ + "  " + urlString);
+        }
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
 
         if (httpResponse.statusCode() != 200)
             throw new RuntimeException("Failed : HTTP Error code : " + httpResponse.statusCode());

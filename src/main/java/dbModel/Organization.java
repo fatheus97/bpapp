@@ -5,7 +5,6 @@ import org.hibernate.annotations.NaturalId;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 @Entity
 @Table(name = "organizations")

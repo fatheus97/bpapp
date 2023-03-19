@@ -3,6 +3,7 @@ import dbModel.Player;
 import modules.DataExtractor;
 import modules.DatabaseManager;
 import modules.GUI;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -26,21 +27,13 @@ public class Controller {
 
         DataExtractor.fetchAccountsToPlayers(org);
 
-            List<Player> players = org.getRoster().getPlayers();
+        List<Player> players = org.getRoster().getPlayers();
 
-            for (Player p : players) {
-                GUI.showData(p);
-            }
+        for (Player p : players) {
+            GUI.showData(p);
+        }
 
-            players.forEach(player -> {
-                player.getAccounts().forEach(acc -> {
-                    try {
-                        DataExtractor.getAccountMatches(acc);
-                    } catch (URISyntaxException | IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            });
+        DataExtractor.fetchMatchesToAccounts(org);
 
 
         DatabaseManager.insertObject(org);

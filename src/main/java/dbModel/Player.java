@@ -63,4 +63,8 @@ public class Player implements Showable, Insertable {
         }
         return content;
     }
+
+    public void deleteAccount(String puuid) {
+        accounts.removeIf(account -> account.getPuuid().equals(puuid));
+    }
 }

@@ -1,9 +1,10 @@
 package dbModel;
 
-import com.google.gson.annotations.Expose;
 import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
@@ -21,6 +22,7 @@ public class Account implements Insertable {
             inverseJoinColumns = @JoinColumn(name = "match_id"))
     private List<Match> matches = new ArrayList<>();
     private Boolean competitive;
+    private LocalDateTime lastUpdated;
 
     public Account() {
         competitive = false;
@@ -32,8 +34,16 @@ public class Account implements Insertable {
         this.player = player;
     }
 
-    public Player getPlayer() {
-        return player;
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public List<Match> getMatches() {
+        return matches;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 
     public void setPlayer(Player player) {
@@ -48,12 +58,8 @@ public class Account implements Insertable {
         return puuid;
     }
 
-    public Boolean getCompetitive() {
+    public Boolean isCompetitive() {
         return competitive;
-    }
-
-    public void setCompetitive(Boolean competitive) {
-        this.competitive = competitive;
     }
 
     @Override

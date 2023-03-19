@@ -7,6 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -23,11 +24,13 @@ public class DataExtractor {
         }
     }
     private static final String TOURNAMENT = props.getProperty("tournament");
-    private static final int DAYS = 1;
+    private static final int START_DAYS = 6;
+    private static final int END_DAYS = 4;
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
         @Override
         public boolean shouldSkipField(FieldAttributes fieldAttributes) {
-            return Objects.equals(fieldAttributes.getName(), "id");
+            return Objects.equals(fieldAttributes.getName(), "id")
+                    || fieldAttributes.getDeclaredClass() == LocalDateTime.class;
         }
 
         @Override
@@ -135,70 +138,93 @@ public class DataExtractor {
         return player;
     }
     
-    public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
-
-        List<Player> players = org.getRoster().getPlayers();
-
-        for (Player p : players) {
-            System.out.println(p);
-            fetchAccountsToPlayer(p);
-        }
+    public static void fetchAccountsToPlayers(Organization org) {
+        org.getRoster().getPlayers().forEach(player -> {
+            try {
+                fetchAccountsToPlayer(player);
+            } catch (IOException | URISyntaxException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private static void fetchAccountsToPlayer(Player player) throws IOException, URISyntaxException, InterruptedException {
 
-        Set<String> oldAccountNames = player.getAccounts().stream()
-                .map(Account::getName)
+        Set<String> oldAccountsPUUIDs = player.getAccounts().stream()
+                .filter(account -> !account.isCompetitive())
+                .map(Account::getPuuid)
                 .collect(Collectors.toSet());
-        Set<String> newAccountNames = getAccountNamesSet();
+        List<Account> newAccounts= getAccounts(player);
+        Set<String> newAccountsPUUIDs = newAccounts.stream()
+                .map(Account::getPuuid)
+                .collect(Collectors.toSet());;
 
+        oldAccountsPUUIDs.stream()
+                .filter(puuid -> !newAccountsPUUIDs.contains(puuid))
+                .forEach(player::deleteAccount);
+
+        newAccounts.stream()
+                .filter(account -> !oldAccountsPUUIDs.contains(account.getPuuid()))
+                .forEach(player::addAccount);
+    }
+
+    private static List<Account> getAccounts(Player player) throws IOException, URISyntaxException, InterruptedException {
+        List<Account> accounts = new ArrayList<>();
         Document doc = Network.getDocumentFromURLString("https://lolpros.gg/player/" + player.getName());
 
         if(doc.getElementsByClass("accounts-list").isEmpty()) {
-            player.addAccount(getAccount(Objects.requireNonNull(doc.getElementById("summoner-names")).getElementsByTag("p").get(0).text(), player));
+            accounts.add(getAccount(Objects.requireNonNull(doc.getElementById("summoner-names")).getElementsByTag("p").get(0).text(), player));
         } else {
             Elements accountElements = doc.getElementsByClass("accounts-list").get(0).getElementsByTag("span");
             for (Element e: accountElements) {
-                player.addAccount(getAccount(e.text(), player));
+                accounts.add(getAccount(e.text(), player));
             }
         }
-
-        oldAccountNames.stream()
-                .filter(val -> !newAccountNames.contains(val))
-                .forEach(val -> doSomething(val));
-
-        newAccountNames.stream()
-                .filter(val -> !oldAccountNames.contains(val))
-                .forEach(val -> doSomethingElse(val));
-    }
-
-    private static Set<String> getAccountNamesSet() {
-        
+        return accounts;
     }
 
     private static Account getAccount(String name, Player player) throws URISyntaxException, IOException, InterruptedException {
 
         String jsonString = Network.getJSONFromURLString("https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + name);
-
+        System.out.println(jsonString);
         Account account = gson.fromJson(jsonString, Account.class);
         account.setPlayer(player);
         return account;
     }
 
-    public static void main(String[] args) {
+    public static void fetchMatchesToAccounts(Organization org) {
+        org.getRoster().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
+            try {
+                fetchMatchesToAccount(account, 0);
+            } catch (URISyntaxException | IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }));
     }
 
-    public static void getAccountMatches(Account acc) throws URISyntaxException, IOException, InterruptedException {
+    public static void fetchMatchesToAccount(Account account, int start) throws URISyntaxException, IOException, InterruptedException {
+        matches.addAll(account.getMatches());
+        if (account.isCompetitive()) {
+            String lastUpdateTime;
+            if(account.getLastUpdated() != null){
+                lastUpdateTime = account.getLastUpdated().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+            } else {
+                lastUpdateTime = "0";
+            }
+            String startTime = Time.getUTCString(START_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+            String endTime = Time.getUTCString(END_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
 
-        if (acc.getCompetitive()) {
             String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
                     "&format=json" +
                     "&tables=ScoreboardPlayers=SP,ScoreboardGames=SG,PostgameJsonMetadata=PJM" +
                     "&join_on=SP.GameId=SG.GameId,SG.RiotPlatformGameId=PJM.RiotPlatformGameId" +
                     "&fields=PJM.StatsPage" +
-                    "&where=SP.Name='" + acc.getName().substring(acc.getName().indexOf(" ")+1) +
-                    "' AND SP.DateTime_UTC>" + Time.getUTCString(DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+                    "&where=SP.Name='" + account.getName().substring(account.getName().indexOf(" ")+1) +
+                    //"' AND SP.DateTime_UTC>" + lastUpdateTime +
+                    "' AND SP.DateTime_UTC>" + startTime +
+                    " AND SP.DateTime_UTC<" + endTime;
             System.out.println(urlString);
+
             String jsonString = Network.getJSONFromURLString(urlString);
             JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
             jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
@@ -206,30 +232,38 @@ public class DataExtractor {
                 Match match = returnMatch(matchID);
                 if (match == null) {
                     try {
-                        match = getMatchFromWiki(matchID, acc);
+                        match = getMatchFromWiki(matchID, account);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                     matches.add(match);
                 }
-                System.out.println(acc + " " + match);
-                acc.addMatch(match);
+                account.addMatch(match);
             });
         } else {
-            String jsonString = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + acc.getPuuid() + "/ids?startTime="
-                    + Time.getEpochInSeconds(DAYS) + "&queue=420&count=100");
+            String jsonString = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + account.getPuuid() +
+                    "/ids?startTime=" + Time.getEpochInSeconds(START_DAYS) +
+                    "&endTime=" + Time.getEpochInSeconds(END_DAYS) +
+                    "&queue=420" +
+                    "&start=" + start +
+                    "&count=100"
+            );
             String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
+            if(listOfMatchIDs.length >= 100) {
+                fetchMatchesToAccount(account, start + 100);
+            }
             for (String matchID: listOfMatchIDs) {
                 Match match = returnMatch(matchID);
                 if (match == null) {
-                    match = getMatchFromRiot(matchID, acc);
+                    match = getMatchFromRiot(matchID, account);
                     matches.add(match);
                 }
                 System.out.println(match);
-                acc.addMatch(match);
+                account.addMatch(match);
             }
         }
 
+        account.setLastUpdated(Time.getUTC());
     }
 
     private static Match returnMatch(String matchId) {
@@ -263,6 +297,4 @@ public class DataExtractor {
 
         return new Match(id, matchWrapper.getInfo(), timelineWrapper.getTimeline(), account);
     }
-
-
 }

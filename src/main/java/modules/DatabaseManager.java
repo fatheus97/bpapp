@@ -40,7 +40,6 @@ public class DatabaseManager {
         sessionFactory.close();
     }
     public static <T> T getObject(Class<T> objectClass, String objectID) {
-        T object = session.get(objectClass, objectID);
-        return object;
+        return session.get(objectClass, objectID);
     }
 }

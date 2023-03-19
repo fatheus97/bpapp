@@ -1,6 +1,5 @@
 package dbModel;
 
-import dbModel.Timeline;
 import com.fasterxml.jackson.annotation.*;
 import com.google.gson.annotations.SerializedName;
 

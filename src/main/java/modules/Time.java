@@ -16,4 +16,8 @@ public class Time {
         localDateTime = localDateTime.minusDays(offsetDays);
         return localDateTime.format(dtf);
     }
+
+    public static LocalDateTime getUTC() {
+        return LocalDateTime.now(ZoneId.of("UTC"));
+    }
 }
