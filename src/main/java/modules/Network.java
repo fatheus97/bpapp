@@ -3,6 +3,7 @@ package modules;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.IOException;
@@ -50,7 +51,15 @@ public class Network {
     }
 
     public static Document getDocumentFromURLString(String urlString) throws IOException {
-        return Jsoup.connect(encodeURLString(urlString)).header("X-Riot-Token", APIKEY).get();
+        Connection.Response response = Jsoup.connect(encodeURLString(urlString)).execute();
+        if (response.statusCode() == 504)
+            throw new IOException(urlString + " is down!");
+        else if (response.statusCode() != 200)
+            throw new IOException("Failed : HTTP Error code : " +
+                    response.statusCode() + "\n" +
+                    urlString);
+
+        return response.parse();
     }
 
     public static String getJSONFromURLString(String urlString) throws URISyntaxException, IOException, InterruptedException {
@@ -67,8 +76,12 @@ public class Network {
         }
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (httpResponse.statusCode() != 200)
-            throw new RuntimeException("Failed : HTTP Error code : " + httpResponse.statusCode());
+        if (httpResponse.statusCode() == 403)
+            throw new IOException("You don't have access to " + uri.getHost());
+        else if (httpResponse.statusCode() != 200)
+            throw new IOException("Failed : HTTP Error code : " +
+                    httpResponse.statusCode() + "\n" +
+                    urlString);
 
         return httpResponse.body();
     }

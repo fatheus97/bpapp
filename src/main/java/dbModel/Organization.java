@@ -4,6 +4,7 @@ import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Entity
@@ -55,11 +56,18 @@ public class Organization implements Showable, Insertable {
     }
 
     @Override
-    public List<String> getContent() {
-        List<String> content = new ArrayList<>();
-        List<Player> players = rosters.get(0).getPlayers();
-        for (Player p : players) {
-            content.add(p.getName());
+    public String[] getColumnNames() {
+        return new String[]{"Role", "Name"};
+    }
+
+    @Override
+    public String[][] getContent() {
+        List<Player> players = getRoster().getPlayers();
+        players.sort(Comparator.comparing(Player::getRole));
+        String[][] content = new String[players.size()][2];;
+        for (int i = 0; i < players.size(); i++) {
+            content[i][0] = players.get(i).getRole().name();
+            content[i][1] = players.get(i).getName();
         }
 
         return content;

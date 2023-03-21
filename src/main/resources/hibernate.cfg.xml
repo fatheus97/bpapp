@@ -14,5 +14,6 @@
         <mapping class="dbModel.Match" />
         <mapping class="dbModel.Info" />
         <mapping class="dbModel.Timeline" />
+        <mapping class="dbModel.Participant" />
     </session-factory>
 </hibernate-configuration>

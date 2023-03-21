@@ -4,5 +4,6 @@ import java.util.List;
 
 public interface Showable {
     String getHeader();
-    List<String> getContent();
+    String[] getColumnNames();
+    String[][] getContent();
 }

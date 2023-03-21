@@ -3,6 +3,8 @@ package dbModel;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 @Entity
 @Table(name = "players")
 public class Player implements Showable, Insertable {
@@ -56,12 +58,18 @@ public class Player implements Showable, Insertable {
     }
 
     @Override
-    public List<String> getContent() {
-        List<String> content = new ArrayList<>();
+    public String[] getColumnNames() {
+        return new String[0];
+    }
+
+    @Override
+    public String[][] getContent() {
+        /*List<String> content = new ArrayList<>();
         for (Account a : accounts) {
             content.add(a.getName());
         }
-        return content;
+        return content;*/
+        return null;
     }
 
     public void deleteAccount(String puuid) {

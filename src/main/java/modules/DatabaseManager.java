@@ -21,7 +21,7 @@ public class DatabaseManager {
         Transaction transaction = session.beginTransaction();
 
         // Save the match object to the database
-        session.saveOrUpdate(obj);
+        session.merge(obj);
 
         // Commit the transaction
         transaction.commit();

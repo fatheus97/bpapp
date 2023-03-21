@@ -27,6 +27,10 @@ public class Match implements Insertable {
 
     }
 
+    public Info getInfo() {
+        return info;
+    }
+
     public String getMatchID() {
         return matchID;
     }

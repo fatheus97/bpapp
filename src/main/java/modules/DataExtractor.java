@@ -24,8 +24,8 @@ public class DataExtractor {
         }
     }
     private static final String TOURNAMENT = props.getProperty("tournament");
-    private static final int START_DAYS = 6;
-    private static final int END_DAYS = 4;
+    private static final int START_DAYS = 3;
+    private static final int END_DAYS = 1;
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
         @Override
         public boolean shouldSkipField(FieldAttributes fieldAttributes) {
@@ -138,14 +138,11 @@ public class DataExtractor {
         return player;
     }
     
-    public static void fetchAccountsToPlayers(Organization org) {
-        org.getRoster().getPlayers().forEach(player -> {
-            try {
-                fetchAccountsToPlayer(player);
-            } catch (IOException | URISyntaxException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
+        List<Player> players = org.getRoster().getPlayers();
+        for (Player player : players) {
+            fetchAccountsToPlayer(player);
+        }
     }
 
     private static void fetchAccountsToPlayer(Player player) throws IOException, URISyntaxException, InterruptedException {
