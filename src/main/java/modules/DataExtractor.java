@@ -10,9 +10,7 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class DataExtractor {
     private static final Properties props = new Properties();
@@ -23,7 +21,7 @@ public class DataExtractor {
             e.printStackTrace();
         }
     }
-    private static final String TOURNAMENT = props.getProperty("tournament");
+    private static String tournament;
     private static final int START_DAYS = 3;
     private static final int END_DAYS = 1;
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
@@ -42,6 +40,10 @@ public class DataExtractor {
 
     private static final List<Match> matches = new ArrayList<>();
 
+    public static void setTournament(String tournament) {
+        DataExtractor.tournament = tournament;
+    }
+
     public static Organization getOrganization(String name) throws URISyntaxException, IOException, InterruptedException {
 
         Organization organization = new Organization(name, getOrganizationShortcut(name));
@@ -52,7 +54,16 @@ public class DataExtractor {
 
     private static String getOrganizationShortcut(String name) throws URISyntaxException, IOException, InterruptedException {
 
-        String jsonString = Network.getJSONFromURLString("https://lol.fandom.com/api.php?action=cargoquery&format=json&tables=Teams&fields=Short&where=Teams.Name='" + name + "'");
+        if(name.contains("(")){
+            name = name.substring(0,name.indexOf("("));
+        }
+
+        String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
+                "&format=json" +
+                "&tables=Teams" +
+                "&fields=Short" +
+                "&where=Teams.Name='" + name + "'";
+        String jsonString = Network.getJSONFromURLString(urlString);
         JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
 
         return jsonObject.get("cargoquery").getAsJsonArray().get(0).getAsJsonObject().get("title").getAsJsonObject().get("Short").getAsString();
@@ -64,40 +75,40 @@ public class DataExtractor {
 
     private static void updateRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
 
-        Roster oldRoster = org.getRoster();
-        Roster newRoster = new Roster();
-        newRoster.setOrg(org);
-        List<Player> players = oldRoster.getPlayers();
-        int nOfChanges = 0;
+        boolean changed = false;
 
-        Map<Role, Player> oldRosterMap = players.stream()
-                .collect(Collectors.toMap(Player::getRole, Function.identity()));
-        Map<Role, String> newRosterMap = getRosterMap(org);
+        List<Player> oldPlayers = org.getLastRoster().getPlayers();
+        Roster newRoster = getRoster(org);
 
-        for (Map.Entry<Role, String> entry : newRosterMap.entrySet()) {
-            if (Objects.equals(entry.getValue(), oldRosterMap.get(entry.getKey()).getName())) {
-                newRoster.addPlayer(oldRosterMap.get(entry.getKey()));
-            } else {
-                nOfChanges += 1;
-                Player player = DatabaseManager.getObject(Player.class, entry.getValue());
-                newRoster.addPlayer(Objects.requireNonNullElseGet(player, () -> getPlayer(entry.getValue(), entry.getKey(), newRoster)));
+        if(oldPlayers.size() != newRoster.getPlayers().size())
+            changed = true;
+        else {
+            Map<String, Role> oldRosterMap = oldPlayers.stream()
+                    .collect(Collectors.toMap(Player::getName, Player::getRole));
+            Map<String, Role> newRosterMap = newRoster.getPlayers().stream()
+                    .collect(Collectors.toMap(Player::getName, Player::getRole));
+
+            for (String s : newRosterMap.keySet()) {
+                if(!oldRosterMap.containsKey(s))
+                    changed = true;
+                else if(newRosterMap.get(s) != oldRosterMap.get(s))
+                    changed = true;
             }
         }
 
-        if (nOfChanges > 0) {
-            newRoster.setNOfChanges(nOfChanges);
+        if (changed) {
             org.addRoster(newRoster);
         }
     }
 
-    private static Map<Role, String> getRosterMap(Organization org) throws URISyntaxException, IOException, InterruptedException {
-        
+    private static Roster getRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
+
         String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
                 "&format=json" +
                 "&tables=TournamentRosters" +
                 "&fields=RosterLinks,Roles" +
                 "&where=TournamentRosters.Team='" + org.getName() +
-                "' AND TournamentRosters.OverviewPage='" + TOURNAMENT + "'";
+                "' AND TournamentRosters.OverviewPage='" + tournament + "'";
 
         String jsonString = Network.getJSONFromURLString(urlString);
         JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
@@ -107,24 +118,15 @@ public class DataExtractor {
         String[] playersNameArray = playersNameString.split(";;");
         String[] playersRoleArray = playersRoleString.split(";;");
 
-        return IntStream.range(0, playersNameArray.length)
-                .boxed()
-                .filter(i -> Arrays.stream(Role.values())
-                        .map(Enum::name)
-                        .toList()
-                        .contains(playersRoleArray[i].toUpperCase()))
-                .collect(Collectors.toMap(i -> Role.valueOf(playersRoleArray[i].toUpperCase()), i -> playersNameArray[i]));
-    }
-
-    private static Roster getRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
-
         Roster roster = new Roster();
         roster.setOrg(org);
 
-        Map<Role, String> rosterMap = getRosterMap(org);
-
-        for (Map.Entry<Role, String> entry : rosterMap.entrySet()) {
-            roster.addPlayer(getPlayer(entry.getValue(), entry.getKey(), roster));
+        for (int i = 0; i < playersNameArray.length; i++) {
+            if (!playersRoleArray[i].equalsIgnoreCase("coach")) {
+                Role role = Role.valueOf(playersRoleArray[i].toUpperCase());
+                String name = playersNameArray[i];
+                roster.addPlayer(getPlayer(name, role , roster));
+            }
         }
 
         return roster;
@@ -139,7 +141,7 @@ public class DataExtractor {
     }
     
     public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
-        List<Player> players = org.getRoster().getPlayers();
+        List<Player> players = org.getLastRoster().getPlayers();
         for (Player player : players) {
             fetchAccountsToPlayer(player);
         }
@@ -190,7 +192,7 @@ public class DataExtractor {
     }
 
     public static void fetchMatchesToAccounts(Organization org) {
-        org.getRoster().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
+        org.getLastRoster().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
             try {
                 fetchMatchesToAccount(account, 0);
             } catch (URISyntaxException | IOException | InterruptedException e) {
@@ -220,12 +222,13 @@ public class DataExtractor {
                     //"' AND SP.DateTime_UTC>" + lastUpdateTime +
                     "' AND SP.DateTime_UTC>" + startTime +
                     " AND SP.DateTime_UTC<" + endTime;
-            System.out.println(urlString);
 
             String jsonString = Network.getJSONFromURLString(urlString);
             JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
             jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
-                String matchID = jsonElement.getAsJsonObject().get("title").getAsJsonObject().get("StatsPage").getAsString();
+                String matchID = jsonElement.getAsJsonObject()
+                        .get("title").getAsJsonObject()
+                        .get("StatsPage").getAsString();
                 Match match = returnMatch(matchID);
                 if (match == null) {
                     try {
@@ -293,5 +296,9 @@ public class DataExtractor {
         TimelineWrapper timelineWrapper = gson.fromJson(jsonStringTimeline, TimelineWrapper.class);
 
         return new Match(id, matchWrapper.getInfo(), timelineWrapper.getTimeline(), account);
+    }
+
+    public static JsonObject getJsonObject(String jsonString) {
+        return gson.fromJson(jsonString, JsonObject.class);
     }
 }

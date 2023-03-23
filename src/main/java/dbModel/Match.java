@@ -15,6 +15,15 @@ public class Match implements Insertable {
     private Info info;
     @OneToOne(cascade = CascadeType.ALL)
     private Timeline timeline;
+    private int value;
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
 
     public Match(String matchID, Info info, Timeline timeline, Account participant) {
         this.matchID = matchID;
@@ -25,6 +34,10 @@ public class Match implements Insertable {
 
     public Match() {
 
+    }
+
+    public List<Account> getAccounts() {
+        return accounts;
     }
 
     public Info getInfo() {

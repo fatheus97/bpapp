@@ -25,8 +25,12 @@ public class Organization implements Showable, Insertable {
     public Organization() {
     }
 
-    public Roster getRoster() {
+    public Roster getLastRoster() {
         return rosters.get(0);
+    }
+
+    public Roster getRoster(int i) {
+        return rosters.get(i);
     }
 
     public void addRoster(Roster roster) {
@@ -62,7 +66,7 @@ public class Organization implements Showable, Insertable {
 
     @Override
     public String[][] getContent() {
-        List<Player> players = getRoster().getPlayers();
+        List<Player> players = getLastRoster().getPlayers();
         players.sort(Comparator.comparing(Player::getRole));
         String[][] content = new String[players.size()][2];;
         for (int i = 0; i < players.size(); i++) {

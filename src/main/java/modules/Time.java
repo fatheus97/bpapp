@@ -20,4 +20,8 @@ public class Time {
     public static LocalDateTime getUTC() {
         return LocalDateTime.now(ZoneId.of("UTC"));
     }
+
+    public static void main(String[] args) {
+        System.out.println(getUTCString(0, DateTimeFormatter.ofPattern("yyyyMMddhhmmss")));
+    }
 }

@@ -16,12 +16,17 @@ public class Roster implements Insertable{
     @ManyToMany(cascade = CascadeType.ALL)
     private List<Player> players = new ArrayList<>();
 
+    public Integer getNOfChanges() {
+        return nOfChanges;
+    }
+
     public Organization getOrg() {
         return org;
     }
 
-    public void setOrg(Organization org) {
+    public Roster setOrg(Organization org) {
         this.org = org;
+        return this;
     }
 
     public void setNOfChanges(Integer nOfChanges) {

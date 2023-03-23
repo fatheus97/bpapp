@@ -2,14 +2,8 @@ package modules;
 
 import dbModel.Organization;
 import dbModel.Player;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import java.awt.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.List;
 
@@ -29,7 +23,7 @@ public class OutputMaker {
         Element h1 = body.appendElement("h1");
         h1.text("Prep sheet for match vs " + organization.getName());
 
-        organization.getRoster().getPlayers().forEach(OutputMaker::addInfographics);
+        organization.getLastRoster().getPlayers().forEach(OutputMaker::addInfographics);
 
         return doc;
     }
@@ -58,15 +52,7 @@ public class OutputMaker {
             public int compare(Map.Entry<String, Integer> entry1, Map.Entry<String, Integer> entry2) {
                 int value1 = entry1.getValue();
                 int value2 = entry2.getValue();
-                if (value1 <= 1 && value2 <= 1) {
-                    return 0;
-                } else if (value1 <= 1) {
-                    return 1;
-                } else if (value2 <= 1) {
-                    return -1;
-                } else {
-                    return Integer.compare(value1, value2);
-                }
+                return Integer.compare(value1, value2);
             }
         });
 
@@ -89,5 +75,20 @@ public class OutputMaker {
     private static void addChampCount(String champName, Map<String, Integer> champCount) {
         int count = champCount.getOrDefault(champName, 0);
         champCount.put(champName, ++count);
+    }
+
+    private static void evaluateMatches(Organization org) {
+        int nOfChanges = org.getLastRoster().getNOfChanges();
+        org.getLastRoster().getPlayers().forEach(player -> {
+            player.getAccounts().forEach(account -> {
+                boolean competitive = account.isCompetitive();
+                account.getMatches().forEach(match -> {
+                    if(competitive)
+                        match.setValue(500-(100*nOfChanges));
+                    else
+                        match.setValue(100);
+                });
+            });
+        });
     }
 }

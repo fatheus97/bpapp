@@ -38,6 +38,10 @@ public class Account implements Insertable {
         return lastUpdated;
     }
 
+    public Player getPlayer() {
+        return player;
+    }
+
     public List<Match> getMatches() {
         return matches;
     }

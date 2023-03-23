@@ -17,6 +17,10 @@ public class Player implements Showable, Insertable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "player")
     private List<Account> accounts = new ArrayList<>();
 
+    public List<Roster> getRosters() {
+        return rosters;
+    }
+
     public Player(String name, Role role, Roster roster) {
         this.name = name;
         this.role = role;

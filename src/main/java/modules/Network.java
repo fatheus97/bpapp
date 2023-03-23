@@ -44,9 +44,10 @@ public class Network {
         String[] queryArray = query.split("&");
 
         for (int i = 0; i < queryArray.length; i++) {
-            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(queryArray[i].substring(queryArray[i].indexOf("=") + 1));
+            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(queryArray[i].substring(queryArray[i].indexOf("=") + 1).replaceAll("(?<==)'([^']*)'([^']*)'","'$1\\\\'$2'"));
         }
         query = String.join("&", queryArray);
+        System.out.println(baseURL + query);
         return baseURL + query;
     }
 
