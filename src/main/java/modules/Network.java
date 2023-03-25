@@ -14,7 +14,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class Network {
     private static int count = 0;
@@ -44,7 +46,7 @@ public class Network {
         String[] queryArray = query.split("&");
 
         for (int i = 0; i < queryArray.length; i++) {
-            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(queryArray[i].substring(queryArray[i].indexOf("=") + 1).replaceAll("(?<==)'([^']*)'([^']*)'","'$1\\\\'$2'"));
+            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(Arrays.stream(queryArray[i].substring(queryArray[i].indexOf("=") + 1).split("AND")).toList().stream().map(s -> s.replaceAll("(?<==)'([^']*)'([^']*)'","'$1\\\\'$2'")).collect(Collectors.joining("AND")));
         }
         query = String.join("&", queryArray);
         System.out.println(baseURL + query);

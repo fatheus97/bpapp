@@ -54,15 +54,11 @@ public class DataExtractor {
 
     private static String getOrganizationShortcut(String name) throws URISyntaxException, IOException, InterruptedException {
 
-        if(name.contains("(")){
-            name = name.substring(0,name.indexOf("("));
-        }
-
         String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
                 "&format=json" +
                 "&tables=Teams" +
                 "&fields=Short" +
-                "&where=Teams.Name='" + name + "'";
+                "&where=Teams.OverviewPage='" + name + "'";
         String jsonString = Network.getJSONFromURLString(urlString);
         JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
 
@@ -141,7 +137,7 @@ public class DataExtractor {
     }
     
     public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
-        List<Player> players = org.getLastRoster().getPlayers();
+        List<Player> players = org.getStartingLineUp().getPlayers();
         for (Player player : players) {
             fetchAccountsToPlayer(player);
         }
@@ -192,7 +188,7 @@ public class DataExtractor {
     }
 
     public static void fetchMatchesToAccounts(Organization org) {
-        org.getLastRoster().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
+        org.getStartingLineUp().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
             try {
                 fetchMatchesToAccount(account, 0);
             } catch (URISyntaxException | IOException | InterruptedException e) {

@@ -16,6 +16,8 @@ public class Organization implements Showable, Insertable {
     private String shortcut;
     @OneToMany(mappedBy = "org", cascade = CascadeType.ALL)
     private List<Roster> rosters = new ArrayList<>();
+    @Transient
+    private Roster startingLineUp;
 
     public Organization(String name, String shortcut) {
         this.name = name;
@@ -23,6 +25,14 @@ public class Organization implements Showable, Insertable {
     }
 
     public Organization() {
+    }
+
+    public Roster getStartingLineUp() {
+        return startingLineUp;
+    }
+
+    public void setStartingLineUp(Roster startingLineUp) {
+        this.startingLineUp = startingLineUp;
     }
 
     public Roster getLastRoster() {

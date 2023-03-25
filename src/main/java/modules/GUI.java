@@ -3,15 +3,14 @@ package modules;
 import com.google.gson.JsonObject;
 import dbModel.Organization;
 import dbModel.Player;
-import dbModel.Role;
-import dbModel.Showable;
+import dbModel.Roster;
+import gui.JCellStyleTable;
 import gui.PlaceholderTextField;
 import gui.RosterTableModel;
 import org.jsoup.nodes.Document;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -21,8 +20,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GUI extends JFrame {
@@ -33,7 +32,8 @@ public class GUI extends JFrame {
     private JLabel lblHeader;
     private JButton btnLoadOrg;
     private JButton btnConfirm;
-    private JTable tblContent;
+    private JCellStyleTable tblContent;
+    private JScrollPane tblContentScroll;
     private JPanel contentPanel;
     private JComboBox cmbRegion;
     private JComboBox cmbTournament;
@@ -165,6 +165,7 @@ public class GUI extends JFrame {
     }
 
     private void makePrep() {
+        setStartingLineUp();
         try {
             DataExtractor.fetchAccountsToPlayers(org);
         } catch (IOException e) {
@@ -202,6 +203,24 @@ public class GUI extends JFrame {
         this.addLinkToPrep(tempFilePath);
     }
 
+    private void setStartingLineUp() {
+        List<String> playerNames = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            playerNames.add((String) tblContent.getValueAt(i,1));
+        }
+        List<Player> players = org.getLastRoster().getPlayers();
+        players.removeIf(player -> !playerNames.contains(player.getName()));
+        org.setStartingLineUp(new Roster(org, players));
+    }
+
+    private int getRosterChangeCount(List<String> playerNames) {
+        List<Player> players = org.getRoster(1).getPlayers();
+        return (int) playerNames.stream()
+                .filter(name -> players.stream()
+                        .noneMatch(player -> player.getName().equals(name)))
+                .count();
+    }
+
     private void loadOrg(String orgName) {
         DataExtractor.setTournament((String) cmbTournament.getSelectedItem());
 
@@ -230,59 +249,37 @@ public class GUI extends JFrame {
                 throw new RuntimeException(e);
             }
         }
-        showData(org);
+        showData();
     }
 
-    public void showData(Showable data) {
-        lblHeader.setText(data.getHeader());
-        tblContent = new JTable() {
-            private final List<Role> roles = org.getLastRoster().getPlayers().stream()
-                    .map(Player::getRole)
-                .distinct()
-                .sorted()
-                .toList();
+    public void showData() {
+        lblHeader.setText(org.getHeader());
 
-            private final Map<Role, List<String>> roleToNames = org.getLastRoster().getPlayers().stream()
-                    .collect(Collectors.groupingBy(Player::getRole,
-                             Collectors.mapping(Player::getName, Collectors.toList())));
-            @Override
-            public TableCellEditor getCellEditor(int row, int column) {
-                if (column == 1) {
-                    Role role = roles.get(row);
-                    List<String> names = roleToNames.get(role);
-                    if (names.size() > 1) {
-                        JComboBox<String> comboBox = new JComboBox<>(names.toArray(new String[0]));
-                        comboBox.setEditable(true);
-                        return new DefaultCellEditor(comboBox);
-                    }
+        RosterTableModel model = new RosterTableModel(org.getLastRoster().getPlayers());
+
+        if(tblContent == null) {
+            tblContent = new JCellStyleTable(model);
+            tblContentScroll = new JScrollPane(tblContent);
+        } else {
+            tblContent.setModel(model);
+            tblContent.getRenderersMap().clear();
+            tblContentScroll.removeAll();
+            tblContentScroll.add(tblContent);
+        }
+        System.out.println(tblContent.getRenderersMap().toString());
+        model.getEditableCells().forEach(cell -> {
+            System.out.println(cell);
+            tblContent.putEditor(cell, new DefaultCellEditor(model.getJComboBox(cell)));
+            tblContent.putRenderer(cell, new DefaultTableCellRenderer(){
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                    return model.getJComboBox(cell);
                 }
-                return super.getCellEditor(row, column);
-            };
+            });
+            tblContent.setRowHeight(model.getJComboBox(cell).getPreferredSize().height);
+        });
 
-            @Override
-            public TableCellRenderer getCellRenderer(int row, int column) {
-                if (column == 1) {
-                    Role role = roles.get(row);
-                    List<String> names = roleToNames.get(role);
-                    if (names.size() > 1) {
-                        JComboBox<String> comboBox = new JComboBox<>(names.toArray(new String[0]));
-                        this.setRowHeight(comboBox.getPreferredSize().height);
-                        return new DefaultTableCellRenderer() {
-                            @Override
-                            public Component getTableCellRendererComponent(JTable table, Object value,
-                                                                           boolean isSelected, boolean hasFocus, int row, int column) {
-                                return comboBox;
-                            }
-                        };
-                    }
-                }
-                return super.getCellRenderer(row, column);
-            }
-        };
-        tblContent.setModel(new RosterTableModel(org.getLastRoster().getPlayers()));
-
-        JScrollPane scrollPane = new JScrollPane(tblContent);
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
+        contentPanel.add(tblContentScroll, BorderLayout.CENTER);
 
         pack();
     }
