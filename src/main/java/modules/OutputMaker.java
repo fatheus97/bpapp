@@ -2,10 +2,12 @@ package modules;
 
 import dbModel.Organization;
 import dbModel.Player;
+import dbModel.Roster;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OutputMaker {
     private static Document doc;
@@ -23,18 +25,63 @@ public class OutputMaker {
         Element h1 = body.appendElement("h1");
         h1.text("Prep sheet for match vs " + organization.getName());
 
-        organization.getLastRoster().getPlayers().forEach(OutputMaker::addInfographics);
+        addInfographics(organization.getLastRoster());
 
         return doc;
     }
 
-    private static void addInfographics(Player player) {
-        doc.body().appendElement("h2").text(player.getName());
-        addChampPool(player);
+    private static void addInfographics(Roster roster) {
+        addCompetitiveChampPool(roster);
+        addSoloQChampPool(roster);
 
     }
 
-    private static void addChampPool(Player player) {
+    private static void addSoloQChampPool(Roster roster) {
+        doc.body().appendElement("h2").text("SoloQ Champ pool");
+        Element div = doc.body().appendElement("div").attr("style", "display:flex;align-items: flex-start");
+        roster.getPlayers().forEach(player -> {
+            Element table = div.appendElement("table");
+            Element trh = table.appendElement("tr");
+            trh.appendElement("th").text(player.getName()).attr("colspan", "2");
+            getSoloQChampPool(player).forEach((k,v) -> {
+                Element trd = table.appendElement("tr");
+                trd.appendElement("td").text(k);
+                trd.appendElement("td").text(String.valueOf(v));
+            });
+        });
+    }
+
+    private static void addCompetitiveChampPool(Roster roster) {
+        doc.body().appendElement("h2").text("Competitive Champ pool");
+        Element div = doc.body().appendElement("div").attr("style", "display:flex;align-items: flex-start");
+        roster.getPlayers().forEach(player -> {
+            Element table = div.appendElement("table");
+            Element trh = table.appendElement("tr");
+            trh.appendElement("th").text(player.getName()).attr("colspan", "2");
+            getCompetitiveChampPool(roster, player).forEach((k,v) -> {
+                Element trd = table.appendElement("tr");
+                trd.appendElement("td").text(k);
+                trd.appendElement("td").text(String.valueOf(v));
+            });
+        });
+    }
+
+    private static Map<String, Integer> getCompetitiveChampPool(Roster roster, Player player) {
+        Map<String, Integer> champCount = new HashMap<>();
+        roster.getMatches().forEach(match -> match.getInfo().getParticipants()
+                        .forEach(participant -> {
+                            if(participant.getSummonerName().equals(roster.getOrg().getShortcut() + " " + player.getName())){
+                                addChampCount(participant.getChampionName(), champCount);
+                                System.out.println(participant);
+                            }
+                        }));
+
+        return champCount.entrySet().stream()
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+
+    private static Map<String, Integer> getSoloQChampPool(Player player) {
         Map<String, Integer> champCount = new HashMap<>();
         player.getAccounts().forEach(account -> account.getMatches()
                 .forEach(match -> match.getInfo().getParticipants()
@@ -45,31 +92,9 @@ public class OutputMaker {
                             }
                         })));
 
-        List<Map.Entry<String, Integer>> entries = new ArrayList<>(champCount.entrySet());
-
-        entries.sort(new Comparator<Map.Entry<String, Integer>>() {
-            @Override
-            public int compare(Map.Entry<String, Integer> entry1, Map.Entry<String, Integer> entry2) {
-                int value1 = entry1.getValue();
-                int value2 = entry2.getValue();
-                return Integer.compare(value1, value2);
-            }
-        });
-
-        Map<String, Integer> sortedMap = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> entry : entries) {
-            sortedMap.put(entry.getKey(), entry.getValue());
-        }
-
-        Element table = doc.body().appendElement("table");
-        Element trh = table.appendElement("tr");
-        trh.appendElement("th").text("Champion");
-        trh.appendElement("th").text("Occurrence");
-        sortedMap.forEach((k,v) -> {
-            Element trd = table.appendElement("tr");
-            trd.appendElement("td").text(k);
-            trd.appendElement("td").text(String.valueOf(v));
-        });
+        return champCount.entrySet().stream()
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     private static void addChampCount(String champName, Map<String, Integer> champCount) {
@@ -77,7 +102,7 @@ public class OutputMaker {
         champCount.put(champName, ++count);
     }
 
-    private static void evaluateMatches(Organization org) {
+    /* static void evaluateMatches(Organization org) {
         int nOfChanges = org.getLastRoster().getNOfChanges();
         org.getLastRoster().getPlayers().forEach(player -> {
             player.getAccounts().forEach(account -> {
@@ -90,5 +115,5 @@ public class OutputMaker {
                 });
             });
         });
-    }
+    }*/
 }

@@ -31,7 +31,7 @@ public class Network {
     private static final String APIKEY = props.getProperty("api.key");
     private static final Bucket riotBucket = Bucket.builder()
             .addLimit(Bandwidth.classic(20, Refill.intervally(20, Duration.ofSeconds(1))))
-            .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofSeconds(135))))
+            .addLimit(Bandwidth.classic(100, Refill.intervally(85, Duration.ofSeconds(140))))
             .build();
     public static String encodeURLString(String urlString) {
 

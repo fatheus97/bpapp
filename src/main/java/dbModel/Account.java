@@ -21,17 +21,10 @@ public class Account implements Insertable {
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "match_id"))
     private List<Match> matches = new ArrayList<>();
-    private Boolean competitive;
     private LocalDateTime lastUpdated;
 
     public Account() {
-        competitive = false;
-    }
 
-    public Account(String name, Boolean competitive, Player player) {
-        this.name = name;
-        this.competitive = competitive;
-        this.player = player;
     }
 
     public LocalDateTime getLastUpdated() {
@@ -62,17 +55,12 @@ public class Account implements Insertable {
         return puuid;
     }
 
-    public Boolean isCompetitive() {
-        return competitive;
-    }
-
     @Override
     public String toString() {
         return "Account{" +
                 "name='" + name + '\'' +
                 ", puuid='" + puuid + '\'' +
                 ", matches=" + matches +
-                ", competitive=" + competitive +
                 '}';
     }
 

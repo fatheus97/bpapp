@@ -15,6 +15,8 @@ public class Match implements Insertable {
     private Info info;
     @OneToOne(cascade = CascadeType.ALL)
     private Timeline timeline;
+    @ManyToOne
+    private Roster roster;
     private int value;
 
     public int getValue() {
@@ -30,6 +32,13 @@ public class Match implements Insertable {
         this.info = info;
         this.timeline = timeline;
         this.accounts.add(participant);
+    }
+
+    public Match(String matchID, Info info, Timeline timeline, Roster roster) {
+        this.matchID = matchID;
+        this.info = info;
+        this.timeline = timeline;
+        this.roster = roster;
     }
 
     public Match() {

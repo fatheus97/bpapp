@@ -166,6 +166,7 @@ public class GUI extends JFrame {
 
     private void makePrep() {
         setStartingLineUp();
+        System.out.println(org);
         try {
             DataExtractor.fetchAccountsToPlayers(org);
         } catch (IOException e) {
@@ -182,8 +183,18 @@ public class GUI extends JFrame {
             GUI.showData(p);
         }*/
 
-        DataExtractor.fetchMatchesToAccounts(org);
+        try {
+            DataExtractor.fetchMatches(org);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(GUI.this, "IO error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
+        System.out.println(org);
         doc = OutputMaker.makeHTMLOutput(org);
 
         Path tempFilePath = null;
@@ -205,7 +216,7 @@ public class GUI extends JFrame {
 
     private void setStartingLineUp() {
         List<String> playerNames = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < tblContent.getRowCount(); i++) {
             playerNames.add((String) tblContent.getValueAt(i,1));
         }
         List<Player> players = org.getLastRoster().getPlayers();

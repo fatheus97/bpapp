@@ -22,8 +22,8 @@ public class DataExtractor {
         }
     }
     private static String tournament;
-    private static final int START_DAYS = 3;
-    private static final int END_DAYS = 1;
+    private static final int START_DAYS = 30;
+    private static final int END_DAYS = 0;
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
         @Override
         public boolean shouldSkipField(FieldAttributes fieldAttributes) {
@@ -121,19 +121,11 @@ public class DataExtractor {
             if (!playersRoleArray[i].equalsIgnoreCase("coach")) {
                 Role role = Role.valueOf(playersRoleArray[i].toUpperCase());
                 String name = playersNameArray[i];
-                roster.addPlayer(getPlayer(name, role , roster));
+                roster.addPlayer(new Player(name, role , roster));
             }
         }
 
         return roster;
-    }
-    
-    private static Player getPlayer(String playerName, Role role, Roster roster) {
-
-        Player player = new Player(playerName, role, roster);
-        player.addAccount(new Account(roster.getOrg().getShortcut() + " " + playerName, true, player));
-
-        return player;
     }
     
     public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
@@ -146,7 +138,6 @@ public class DataExtractor {
     private static void fetchAccountsToPlayer(Player player) throws IOException, URISyntaxException, InterruptedException {
 
         Set<String> oldAccountsPUUIDs = player.getAccounts().stream()
-                .filter(account -> !account.isCompetitive())
                 .map(Account::getPuuid)
                 .collect(Collectors.toSet());
         List<Account> newAccounts= getAccounts(player);
@@ -164,8 +155,18 @@ public class DataExtractor {
     }
 
     private static List<Account> getAccounts(Player player) throws IOException, URISyntaxException, InterruptedException {
+        String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
+                "&format=json" +
+                "&tables=Players" +
+                "&fields=Lolpros" +
+                "&where=OverviewPage='" + player.getName() + "'";
+
+        String jsonString = Network.getJSONFromURLString(urlString);
+        JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
+        String lolProsURL = jsonObject.get("cargoquery").getAsJsonArray().get(0).getAsJsonObject().get("title").getAsJsonObject().get("Lolpros").getAsString();
+
         List<Account> accounts = new ArrayList<>();
-        Document doc = Network.getDocumentFromURLString("https://lolpros.gg/player/" + player.getName());
+        Document doc = Network.getDocumentFromURLString(lolProsURL);
 
         if(doc.getElementsByClass("accounts-list").isEmpty()) {
             accounts.add(getAccount(Objects.requireNonNull(doc.getElementById("summoner-names")).getElementsByTag("p").get(0).text(), player));
@@ -187,6 +188,70 @@ public class DataExtractor {
         return account;
     }
 
+    public static void fetchMatches(Organization org) throws URISyntaxException, IOException, InterruptedException {
+        fetchMatchesToRosters(org);
+        fetchMatchesToAccounts(org);
+    }
+
+    private static void fetchMatchesToRosters(Organization org) throws URISyntaxException, IOException, InterruptedException {
+        for (Roster roster : org.getRosters()) {
+            fetchMatchesToRoster(roster);
+        }
+    }
+
+    private static void fetchMatchesToRoster(Roster roster) throws URISyntaxException, IOException, InterruptedException {
+        matches.addAll(roster.getMatches());
+
+        String lastUpdateTime = "0";
+        if(roster.getLastUpdated() != null){
+            lastUpdateTime = roster.getLastUpdated().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+        }
+        String startTime = Time.getUTCString(START_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+        String endTime = Time.getUTCString(END_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+
+        String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
+                "&format=json" +
+                "&tables=ScoreboardTeams=ST,ScoreboardGames=SG,PostgameJsonMetadata=PJM" +
+                "&join_on=ST.GameId=SG.GameId,SG.RiotPlatformGameId=PJM.RiotPlatformGameId" +
+                "&fields=PJM.StatsPage" +
+                "&where=ST.Team='" + roster.getOrg().getName() +
+                "' AND ST.Roster__full='" + roster.playersToString() +
+                //"' AND SG.DateTime_UTC>" + lastUpdateTime +
+                "' AND SG.DateTime_UTC>" + startTime +
+                " AND SG.DateTime_UTC<" + endTime;
+
+        String jsonString = Network.getJSONFromURLString(urlString);
+        JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
+        jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
+            String matchID = jsonElement.getAsJsonObject()
+                    .get("title").getAsJsonObject()
+                    .get("StatsPage").getAsString();
+            Match match = returnMatch(matchID);
+            if (match == null) {
+                try {
+                    match = getMatchFromWiki(matchID, roster);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                matches.add(match);
+            }
+            roster.addMatch(match);
+        });
+        roster.setLastUpdated(Time.getUTC());
+    }
+
+    private static Match getMatchFromWiki(String id, Roster roster) throws IOException {
+        Document documentInfo = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "?action=edit");
+        String jsonStringInfo = Objects.requireNonNull(documentInfo.getElementById("wpTextbox1")).text();
+        Info info = gson.fromJson(jsonStringInfo, Info.class);
+
+        Document documentTimeline = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "/Timeline?action=edit");
+        String jsonStringTimeline = Objects.requireNonNull(documentTimeline.getElementById("wpTextbox1")).text();
+        Timeline timeline = gson.fromJson(jsonStringTimeline, Timeline.class);
+
+        return new Match(id, info, timeline, roster);
+    }
+
     public static void fetchMatchesToAccounts(Organization org) {
         org.getStartingLineUp().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
             try {
@@ -199,66 +264,26 @@ public class DataExtractor {
 
     public static void fetchMatchesToAccount(Account account, int start) throws URISyntaxException, IOException, InterruptedException {
         matches.addAll(account.getMatches());
-        if (account.isCompetitive()) {
-            String lastUpdateTime;
-            if(account.getLastUpdated() != null){
-                lastUpdateTime = account.getLastUpdated().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
-            } else {
-                lastUpdateTime = "0";
-            }
-            String startTime = Time.getUTCString(START_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
-            String endTime = Time.getUTCString(END_DAYS, DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
-
-            String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
-                    "&format=json" +
-                    "&tables=ScoreboardPlayers=SP,ScoreboardGames=SG,PostgameJsonMetadata=PJM" +
-                    "&join_on=SP.GameId=SG.GameId,SG.RiotPlatformGameId=PJM.RiotPlatformGameId" +
-                    "&fields=PJM.StatsPage" +
-                    "&where=SP.Name='" + account.getName().substring(account.getName().indexOf(" ")+1) +
-                    //"' AND SP.DateTime_UTC>" + lastUpdateTime +
-                    "' AND SP.DateTime_UTC>" + startTime +
-                    " AND SP.DateTime_UTC<" + endTime;
-
-            String jsonString = Network.getJSONFromURLString(urlString);
-            JsonObject jsonObject = gson.fromJson(jsonString, JsonObject.class);
-            jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
-                String matchID = jsonElement.getAsJsonObject()
-                        .get("title").getAsJsonObject()
-                        .get("StatsPage").getAsString();
-                Match match = returnMatch(matchID);
-                if (match == null) {
-                    try {
-                        match = getMatchFromWiki(matchID, account);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    matches.add(match);
-                }
-                account.addMatch(match);
-            });
-        } else {
-            String jsonString = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + account.getPuuid() +
+        String jsonString = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/" + account.getPuuid() +
                     "/ids?startTime=" + Time.getEpochInSeconds(START_DAYS) +
                     "&endTime=" + Time.getEpochInSeconds(END_DAYS) +
                     "&queue=420" +
                     "&start=" + start +
                     "&count=100"
-            );
-            String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
-            if(listOfMatchIDs.length >= 100) {
-                fetchMatchesToAccount(account, start + 100);
-            }
-            for (String matchID: listOfMatchIDs) {
-                Match match = returnMatch(matchID);
-                if (match == null) {
-                    match = getMatchFromRiot(matchID, account);
-                    matches.add(match);
-                }
-                System.out.println(match);
-                account.addMatch(match);
-            }
+        );
+        String[] listOfMatchIDs = gson.fromJson(jsonString, String[].class);
+        if(listOfMatchIDs.length >= 100) {
+            fetchMatchesToAccount(account, start + 100);
         }
-
+        for (String matchID: listOfMatchIDs) {
+            Match match = returnMatch(matchID);
+            if (match == null) {
+                match = getMatchFromRiot(matchID, account);
+                matches.add(match);
+            }
+            System.out.println(match);
+            account.addMatch(match);
+        }
         account.setLastUpdated(Time.getUTC());
     }
 
@@ -269,18 +294,6 @@ public class DataExtractor {
             }
         }
         return null;
-    }
-
-    private static Match getMatchFromWiki(String id, Account account) throws IOException {
-        Document documentInfo = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "?action=edit");
-        String jsonStringInfo = Objects.requireNonNull(documentInfo.getElementById("wpTextbox1")).text();
-        Info info = gson.fromJson(jsonStringInfo, Info.class);
-
-        Document documentTimeline = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "/Timeline?action=edit");
-        String jsonStringTimeline = Objects.requireNonNull(documentTimeline.getElementById("wpTextbox1")).text();
-        Timeline timeline = gson.fromJson(jsonStringTimeline, Timeline.class);
-
-        return new Match(id, info, timeline, account);
     }
 
     public static Match getMatchFromRiot(String id, Account account) throws URISyntaxException, IOException, InterruptedException {

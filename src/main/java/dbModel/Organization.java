@@ -31,6 +31,10 @@ public class Organization implements Showable, Insertable {
         return startingLineUp;
     }
 
+    public List<Roster> getRosters() {
+        return rosters;
+    }
+
     public void setStartingLineUp(Roster startingLineUp) {
         this.startingLineUp = startingLineUp;
     }
@@ -61,6 +65,7 @@ public class Organization implements Showable, Insertable {
                 "name='" + name + '\'' +
                 ", shortcut='" + shortcut + '\'' +
                 ", rosters=" + rosters +
+                ", startingLineUp=" + startingLineUp +
                 '}';
     }
 
