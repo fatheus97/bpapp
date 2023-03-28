@@ -4,13 +4,13 @@ import com.google.gson.JsonObject;
 import dbModel.Organization;
 import dbModel.Player;
 import dbModel.Roster;
+import errorHandling.PlayersLOLProsNotFound;
 import gui.JCellStyleTable;
 import gui.PlaceholderTextField;
 import gui.RosterTableModel;
 import org.jsoup.nodes.Document;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class GUI extends JFrame {
 
@@ -62,7 +61,7 @@ public class GUI extends JFrame {
         lblHeader = new JLabel();
         btnLoadOrg = new JButton("Load");
         btnConfirm = new JButton("Confirm");
-        cmbRegion = new JComboBox<>(new String[]{"China", "EMEA", "International", "Korea", "North America"});
+        cmbRegion = new JComboBox<>(new String[]{"EMEA"});
         cmbTournament = new JComboBox<>();
         cmbTeam = new JComboBox<>();
 
@@ -176,6 +175,8 @@ public class GUI extends JFrame {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } catch (PlayersLOLProsNotFound e) {
+            JOptionPane.showMessageDialog(GUI.this, "We could not find LOLPros page of this player: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         /*List<Player> players = org.getRoster().getPlayers();
@@ -194,7 +195,6 @@ public class GUI extends JFrame {
             throw new RuntimeException(e);
         }
 
-        System.out.println(org);
         doc = OutputMaker.makeHTMLOutput(org);
 
         Path tempFilePath = null;

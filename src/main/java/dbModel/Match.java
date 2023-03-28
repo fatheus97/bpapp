@@ -63,6 +63,7 @@ public class Match implements Insertable {
                 "matchID='" + matchID + '\'' +
                 ", info=" + info +
                 ", timeline=" + timeline +
+                ", value=" + value +
                 '}';
     }
 }

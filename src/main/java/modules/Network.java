@@ -30,8 +30,8 @@ public class Network {
     }
     private static final String APIKEY = props.getProperty("api.key");
     private static final Bucket riotBucket = Bucket.builder()
-            .addLimit(Bandwidth.classic(20, Refill.intervally(20, Duration.ofSeconds(1))))
-            .addLimit(Bandwidth.classic(100, Refill.intervally(85, Duration.ofSeconds(140))))
+            .addLimit(Bandwidth.classic(20, Refill.intervally(20, Duration.ofSeconds(2))).withInitialTokens(15))
+            .addLimit(Bandwidth.classic(50, Refill.intervally(50, Duration.ofSeconds(120))).withInitialTokens(50))
             .build();
     public static String encodeURLString(String urlString) {
 
@@ -71,20 +71,27 @@ public class Network {
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(uri).build();
         if(urlString.contains("api.riotgames.com")){
+            riotBucket.asBlocking().consume(1);
             httpRequest = HttpRequest.newBuilder(uri)
                     .header("X-Riot-Token", APIKEY)
                     .build();
-            riotBucket.asBlocking().consume(1);
             System.out.println(count++ + "  " + urlString);
         }
-        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        boolean retryRequest = false;
+        HttpResponse<String> httpResponse = null;
+        do {
+            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (httpResponse.statusCode() == 403)
-            throw new IOException("You don't have access to " + uri.getHost());
-        else if (httpResponse.statusCode() != 200)
-            throw new IOException("Failed : HTTP Error code : " +
-                    httpResponse.statusCode() + "\n" +
-                    urlString);
+            if (httpResponse.statusCode() == 403)
+                throw new IOException("You don't have access to " + uri.getHost());
+            else if (httpResponse.statusCode() == 429 || httpResponse.statusCode() == 503) {
+                Thread.sleep(10000);
+                retryRequest = true;
+            } else if (httpResponse.statusCode() != 200)
+                throw new IOException("Failed : HTTP Error code : " +
+                        httpResponse.statusCode() + "\n" +
+                        urlString);
+        } while (retryRequest);
 
         return httpResponse.body();
     }

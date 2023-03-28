@@ -2,6 +2,7 @@ package modules;
 
 import dbModel.*;
 import com.google.gson.*;
+import errorHandling.PlayersLOLProsNotFound;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -22,7 +23,7 @@ public class DataExtractor {
         }
     }
     private static String tournament;
-    private static final int START_DAYS = 30;
+    private static final int START_DAYS = 18;
     private static final int END_DAYS = 0;
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
         @Override
@@ -128,14 +129,14 @@ public class DataExtractor {
         return roster;
     }
     
-    public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException {
+    public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException, PlayersLOLProsNotFound {
         List<Player> players = org.getStartingLineUp().getPlayers();
         for (Player player : players) {
             fetchAccountsToPlayer(player);
         }
     }
 
-    private static void fetchAccountsToPlayer(Player player) throws IOException, URISyntaxException, InterruptedException {
+    private static void fetchAccountsToPlayer(Player player) throws IOException, URISyntaxException, InterruptedException, PlayersLOLProsNotFound {
 
         Set<String> oldAccountsPUUIDs = player.getAccounts().stream()
                 .map(Account::getPuuid)
@@ -154,7 +155,7 @@ public class DataExtractor {
                 .forEach(player::addAccount);
     }
 
-    private static List<Account> getAccounts(Player player) throws IOException, URISyntaxException, InterruptedException {
+    private static List<Account> getAccounts(Player player) throws URISyntaxException, IOException, InterruptedException, PlayersLOLProsNotFound {
         String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
                 "&format=json" +
                 "&tables=Players" +
@@ -166,7 +167,16 @@ public class DataExtractor {
         String lolProsURL = jsonObject.get("cargoquery").getAsJsonArray().get(0).getAsJsonObject().get("title").getAsJsonObject().get("Lolpros").getAsString();
 
         List<Account> accounts = new ArrayList<>();
-        Document doc = Network.getDocumentFromURLString(lolProsURL);
+        Document doc = null;
+        try {
+            doc = Network.getDocumentFromURLString(lolProsURL);
+        } catch (IOException e) {
+            try {
+                doc = Network.getDocumentFromURLString("https://lolpros.gg/player/" + player.getName());
+            } catch (IOException ex) {
+                throw new PlayersLOLProsNotFound(player.getName());
+            }
+        }
 
         if(doc.getElementsByClass("accounts-list").isEmpty()) {
             accounts.add(getAccount(Objects.requireNonNull(doc.getElementById("summoner-names")).getElementsByTag("p").get(0).text(), player));
@@ -244,6 +254,9 @@ public class DataExtractor {
         Document documentInfo = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "?action=edit");
         String jsonStringInfo = Objects.requireNonNull(documentInfo.getElementById("wpTextbox1")).text();
         Info info = gson.fromJson(jsonStringInfo, Info.class);
+        for (Participant participant : info.getParticipants()) {
+            participant.setInfo(info);
+        }
 
         Document documentTimeline = Network.getDocumentFromURLString("https://lol.fandom.com/wiki/" + id + "/Timeline?action=edit");
         String jsonStringTimeline = Objects.requireNonNull(documentTimeline.getElementById("wpTextbox1")).text();
@@ -301,10 +314,15 @@ public class DataExtractor {
         String jsonStringData = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/" + id);
         MatchWrapper matchWrapper = gson.fromJson(jsonStringData, MatchWrapper.class);
 
+        Info info = matchWrapper.getInfo();
+        for (Participant participant : info.getParticipants()) {
+            participant.setInfo(info);
+        }
+
         String jsonStringTimeline = Network.getJSONFromURLString("https://europe.api.riotgames.com/lol/match/v5/matches/" + id + "/timeline");
         TimelineWrapper timelineWrapper = gson.fromJson(jsonStringTimeline, TimelineWrapper.class);
 
-        return new Match(id, matchWrapper.getInfo(), timelineWrapper.getTimeline(), account);
+        return new Match(id, info, timelineWrapper.getTimeline(), account);
     }
 
     public static JsonObject getJsonObject(String jsonString) {

@@ -54,6 +54,8 @@ public class OutputMaker {
     private static void addCompetitiveChampPool(Roster roster) {
         doc.body().appendElement("h2").text("Competitive Champ pool");
         Element div = doc.body().appendElement("div").attr("style", "display:flex;align-items: flex-start");
+        roster.getMatches().forEach(System.out::println);
+        roster.getMatches().forEach(match -> match.getInfo().getParticipants().forEach(System.out::println));
         roster.getPlayers().forEach(player -> {
             Element table = div.appendElement("table");
             Element trh = table.appendElement("tr");

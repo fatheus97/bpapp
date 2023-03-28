@@ -17,7 +17,7 @@ public class Info implements Insertable {
     private Match match;
     private long gameCreation;
     @OneToMany(mappedBy = "info", cascade = CascadeType.ALL)
-    private List<Participant> participants = new ArrayList<>();
+    List<Participant> participants = new ArrayList<>();
 
     public List<Participant> getParticipants() {
         return participants;
@@ -32,6 +32,8 @@ public class Info implements Insertable {
     public String toString() {
         return "Info{" +
                 "gameID=" + gameID +
+                ", gameCreation=" + gameCreation +
+                ", participants=" + participants +
                 '}';
     }
 }
