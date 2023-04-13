@@ -49,6 +49,10 @@ public class Match implements Insertable {
         return accounts;
     }
 
+    public Timeline getTimeline() {
+        return timeline;
+    }
+
     public Info getInfo() {
         return info;
     }
@@ -61,9 +65,7 @@ public class Match implements Insertable {
     public String toString() {
         return "Match{" +
                 "matchID='" + matchID + '\'' +
-                ", info=" + info +
                 ", timeline=" + timeline +
-                ", value=" + value +
                 '}';
     }
 }

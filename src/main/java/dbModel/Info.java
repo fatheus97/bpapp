@@ -16,7 +16,7 @@ public class Info implements Insertable {
     @OneToOne(mappedBy = "info")
     private Match match;
     private long gameCreation;
-    @OneToMany(mappedBy = "info", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "info", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Participant> participants = new ArrayList<>();
 
     public List<Participant> getParticipants() {

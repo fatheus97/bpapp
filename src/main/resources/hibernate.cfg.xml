@@ -14,5 +14,9 @@
         <mapping class="dbModel.Info" />
         <mapping class="dbModel.Timeline" />
         <mapping class="dbModel.Participant" />
+        <mapping class="dbModel.Frame" />
+        <mapping class="dbModel.Event" />
+        <mapping class="dbModel.ParticipantFrame" />
+        <mapping class="dbModel.Position" />
     </session-factory>
 </hibernate-configuration>

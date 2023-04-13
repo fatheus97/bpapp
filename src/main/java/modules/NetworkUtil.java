@@ -18,20 +18,20 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-public class Network {
+public class NetworkUtil {
     private static int count = 0;
     private static final Properties props = new Properties();
     static {
         try {
-            props.load(Network.class.getResourceAsStream("/config.properties"));
+            props.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     private static final String APIKEY = props.getProperty("api.key");
     private static final Bucket riotBucket = Bucket.builder()
-            .addLimit(Bandwidth.classic(20, Refill.intervally(20, Duration.ofSeconds(2))).withInitialTokens(15))
-            .addLimit(Bandwidth.classic(50, Refill.intervally(50, Duration.ofSeconds(120))).withInitialTokens(50))
+            .addLimit(Bandwidth.classic(20, Refill.greedy(20, Duration.ofSeconds(1))))
+            .addLimit(Bandwidth.classic(100, Refill.greedy(100, Duration.ofSeconds(120))))
             .build();
     public static String encodeURLString(String urlString) {
 
@@ -80,12 +80,20 @@ public class Network {
         boolean retryRequest = false;
         HttpResponse<String> httpResponse = null;
         do {
+            retryRequest = false;
             httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (httpResponse.statusCode() == 403)
                 throw new IOException("You don't have access to " + uri.getHost());
             else if (httpResponse.statusCode() == 429 || httpResponse.statusCode() == 503) {
-                Thread.sleep(10000);
+                if(httpResponse.headers().firstValueAsLong("Retry-After").isPresent()) {
+                    long sleepTime = httpResponse.headers().firstValueAsLong("Retry-After").getAsLong();
+                    System.out.println(sleepTime);
+                    Thread.sleep(sleepTime);
+                } else {
+                    System.out.println("10000 set");
+                    Thread.sleep(10000);
+                }
                 retryRequest = true;
             } else if (httpResponse.statusCode() != 200)
                 throw new IOException("Failed : HTTP Error code : " +

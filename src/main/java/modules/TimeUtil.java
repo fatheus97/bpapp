@@ -5,7 +5,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-public class Time {
+public class TimeUtil {
     public static long getEpochInSeconds(int offsetDays) {
         LocalDateTime localDateTime = LocalDateTime.now().minusDays(offsetDays);
         return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli()/1000;
