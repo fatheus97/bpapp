@@ -1,10 +1,10 @@
-import modules.DatabaseManager;
-import modules.GUI;
+import components.DatabaseManager;
+import components.MainFrame;
 
 public class AppMain {
     public static void main(String[] args) {
         DatabaseManager.openSession();
 
-        GUI gui = new GUI();
+        MainFrame mainFrame = new MainFrame();
     }
 }

@@ -1,4 +1,4 @@
-package modules;
+package components;
 
 import dbModel.*;
 import com.google.gson.*;

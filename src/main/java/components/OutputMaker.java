@@ -1,4 +1,4 @@
-package modules;
+package components;
 
 import dbModel.*;
 import org.jsoup.nodes.Document;

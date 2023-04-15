@@ -1,4 +1,4 @@
-package modules;
+package components;
 
 import dbModel.Insertable;
 import org.hibernate.Session;

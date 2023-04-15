@@ -1,4 +1,4 @@
-package modules;
+package components;
 
 import com.google.gson.JsonObject;
 import dbModel.Organization;
@@ -7,14 +7,13 @@ import dbModel.Roster;
 import errorHandling.PlayerNotFoundInLoLProsException;
 import gui.JCellStyleTable;
 import gui.RosterTableModel;
-import org.jsoup.nodes.Document;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -22,7 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GUI extends JFrame {
+public class MainFrame extends JFrame {
 
     private Organization org;
     private final JButton btnMakePrep;
@@ -33,7 +32,7 @@ public class GUI extends JFrame {
     private final JComboBox<String> cmbTournament;
     private final JComboBox<String> cmbTeam;
 
-    public GUI() {
+    public MainFrame() {
         // set frame properties
         setTitle("LOLPrep");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -126,7 +125,7 @@ public class GUI extends JFrame {
                 protected void done() {
                     waitDialog.dispose();
                     if (errorMessage != null) {
-                        JOptionPane.showMessageDialog(GUI.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(MainFrame.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             };
@@ -166,7 +165,7 @@ public class GUI extends JFrame {
                     try {
                         makePrep(waitTextArea);
                     } catch (PlayerNotFoundInLoLProsException e) {
-                        JOptionPane.showMessageDialog(GUI.this, "We could not find LOLPros page of this player: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(MainFrame.this, "We could not find LOLPros page of this player: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         // TODO: 07.04.2023 retry or manually add player's soloQ accounts
                     } catch (Throwable e) {
                         errorMessage = e.getMessage();
@@ -179,7 +178,7 @@ public class GUI extends JFrame {
                 protected void done() {
                     waitDialog.dispose();
                     if (errorMessage != null) {
-                        JOptionPane.showMessageDialog(GUI.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(MainFrame.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             };
@@ -232,7 +231,7 @@ public class GUI extends JFrame {
             protected void done() {
                 waitDialog.dispose();
                 if (errorMessage != null) {
-                    JOptionPane.showMessageDialog(GUI.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(MainFrame.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
@@ -287,7 +286,7 @@ public class GUI extends JFrame {
             protected void done() {
                 waitDialog.dispose();
                 if (errorMessage != null) {
-                    JOptionPane.showMessageDialog(GUI.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(MainFrame.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
