@@ -23,20 +23,20 @@ public class OutputMaker {
     private static int height;
     private static final List<Area> areaList = new ArrayList<>();
 
-    public static Path makeHTMLOutput(Organization organization) throws IOException {
+    public static Path makeHTMLOutput(Organisation organisation) throws IOException {
         // create a new HTML document
         doc = Document.createShell("");
         Element head = doc.head();
         Element body = doc.body();
 
         // add a title to the document
-        head.appendElement("title").text("Prep sheet for match vs " + organization.getName());
+        head.appendElement("title").text("Prep sheet for match vs " + organisation.getName());
 
         // add a header to the document
         Element h1 = body.appendElement("h1");
-        h1.text("Prep sheet for match vs " + organization.getName());
+        h1.text("Prep sheet for match vs " + organisation.getName());
 
-        Roster roster = organization.getLastRoster();
+        Roster roster = organisation.getLastRoster();
 
         addInfographics(roster);
         addHeatmaps(roster);

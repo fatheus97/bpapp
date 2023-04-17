@@ -9,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizations")
-public class Organization implements Showable, Insertable {
+public class Organisation implements Showable, Insertable {
     @Id
     private String name;
     @NaturalId
@@ -19,12 +19,12 @@ public class Organization implements Showable, Insertable {
     @Transient
     private Roster startingLineUp;
 
-    public Organization(String name, String shortcut) {
+    public Organisation(String name, String shortcut) {
         this.name = name;
         this.shortcut = shortcut;
     }
 
-    public Organization() {
+    public Organisation() {
     }
 
     public Roster getStartingLineUp() {

@@ -6,7 +6,7 @@
         <property name="hibernate.connection.password">Vp2yUJ6UHRRxIFx</property>
         <property name="hibernate.dialect">org.hibernate.dialect.MariaDBDialect</property>
         <property name="hibernate.hbm2ddl.auto">update</property>
-        <mapping class="dbModel.Organization" />
+        <mapping class="dbModel.Organisation" />
         <mapping class="dbModel.Roster" />
         <mapping class="dbModel.Player" />
         <mapping class="dbModel.Account" />

@@ -42,18 +42,22 @@ public class DataExtractor {
 
     private static final List<Match> matches = new ArrayList<>();
 
+    private DataExtractor() {
+
+    }
+
     public static void setTournament(String tournament) {
         DataExtractor.tournament = tournament;
     }
 
-    public static Organization getOrganization(String name) throws URISyntaxException, IOException, InterruptedException {
+    public static Organisation getOrganization(String name) throws URISyntaxException, IOException, InterruptedException {
 
-        Organization org = DatabaseManager.getObject(Organization.class, name);
+        Organisation org = DatabaseManager.getObject(Organisation.class, name);
 
         if (org != null){
             DataExtractor.updateOrganization(org);
         } else {
-            org = new Organization(name, getOrganizationShortcut(name));
+            org = new Organisation(name, getOrganizationShortcut(name));
             org.addRoster(getRoster(org));
         }
 
@@ -73,11 +77,11 @@ public class DataExtractor {
         return jsonObject.get("cargoquery").getAsJsonArray().get(0).getAsJsonObject().get("title").getAsJsonObject().get("Short").getAsString();
     }
 
-    private static void updateOrganization(Organization org) throws URISyntaxException, IOException, InterruptedException {
+    private static void updateOrganization(Organisation org) throws URISyntaxException, IOException, InterruptedException {
         updateRoster(org);
     }
 
-    private static void updateRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
+    private static void updateRoster(Organisation org) throws URISyntaxException, IOException, InterruptedException {
 
         boolean changed = false;
 
@@ -105,7 +109,7 @@ public class DataExtractor {
         }
     }
 
-    private static Roster getRoster(Organization org) throws URISyntaxException, IOException, InterruptedException {
+    private static Roster getRoster(Organisation org) throws URISyntaxException, IOException, InterruptedException {
 
         String urlString = "https://lol.fandom.com/api.php?action=cargoquery" +
                 "&format=json" +
@@ -138,7 +142,7 @@ public class DataExtractor {
         return roster;
     }
     
-    public static void fetchAccountsToPlayers(Organization org) throws IOException, URISyntaxException, InterruptedException, PlayerNotFoundInLoLProsException {
+    public static void fetchAccountsToPlayers(Organisation org) throws IOException, URISyntaxException, InterruptedException, PlayerNotFoundInLoLProsException {
         List<Player> players = org.getStartingLineUp().getPlayers();
         for (Player player : players) {
             fetchAccountsToPlayer(player);
@@ -206,12 +210,12 @@ public class DataExtractor {
         return account;
     }
 
-    public static void fetchMatches(Organization org) throws URISyntaxException, IOException, InterruptedException {
+    public static void fetchMatches(Organisation org) throws URISyntaxException, IOException, InterruptedException {
         fetchMatchesToRosters(org);
         fetchMatchesToAccounts(org);
     }
 
-    private static void fetchMatchesToRosters(Organization org) throws URISyntaxException, IOException, InterruptedException {
+    private static void fetchMatchesToRosters(Organisation org) throws URISyntaxException, IOException, InterruptedException {
         for (Roster roster : org.getRosters()) {
             fetchMatchesToRoster(roster);
         }
@@ -275,7 +279,7 @@ public class DataExtractor {
         return new Match(id, info, timeline, roster);
     }
 
-    public static void fetchMatchesToAccounts(Organization org) {
+    public static void fetchMatchesToAccounts(Organisation org) {
         org.getStartingLineUp().getPlayers().forEach(player -> player.getAccounts().forEach(account -> {
             try {
                 fetchMatchesToAccount(account, 0);

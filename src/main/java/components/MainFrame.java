@@ -1,11 +1,12 @@
 package components;
 
 import com.google.gson.JsonObject;
-import dbModel.Organization;
+import dbModel.Organisation;
 import dbModel.Player;
 import dbModel.Roster;
 import errorHandling.PlayerNotFoundInLoLProsException;
 import gui.JCellStyleTable;
+import gui.RosterTable;
 import gui.RosterTableModel;
 
 import javax.swing.*;
@@ -23,14 +24,14 @@ import java.util.List;
 
 public class MainFrame extends JFrame {
 
-    private Organization org;
+    private Organisation org;
     private final JButton btnMakePrep;
     private JCellStyleTable tblContent;
     private JScrollPane tblContentScroll;
     private final JPanel contentPanel;
     private final JComboBox<String> cmbRegion;
     private final JComboBox<String> cmbTournament;
-    private final JComboBox<String> cmbTeam;
+    private final JComboBox<String> cmbOrganisation;
 
     public MainFrame() {
         // set frame properties
@@ -53,11 +54,11 @@ public class MainFrame extends JFrame {
         // create active components
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         JPanel inputPanel = new JPanel();
-        JButton btnLoadOrg = new JButton("Show organization's roster");
-        btnMakePrep = new JButton("Confirm line-up to load match data");
+        JButton btnLoadRoster = new JButton("Show organisation's roster");
+        btnMakePrep = new JButton("Confirm roster to continue");
         cmbRegion = new JComboBox<>(new String[]{"EMEA"});
         cmbTournament = new JComboBox<>();
-        cmbTeam = new JComboBox<>();
+        cmbOrganisation = new JComboBox<>();
 
 
         // set layout
@@ -70,9 +71,9 @@ public class MainFrame extends JFrame {
         cmbTournament.setPreferredSize(new Dimension(512, (int) cmbRegion.getPreferredSize().getHeight()));
         inputPanel.add(cmbTournament);
         inputPanel.add(new JLabel("Team:"));
-        cmbTeam.setPreferredSize(new Dimension(128, (int) cmbRegion.getPreferredSize().getHeight()));
-        inputPanel.add(cmbTeam);
-        inputPanel.add(btnLoadOrg);
+        cmbOrganisation.setPreferredSize(new Dimension(128, (int) cmbRegion.getPreferredSize().getHeight()));
+        inputPanel.add(cmbOrganisation);
+        inputPanel.add(btnLoadRoster);
         wrapperPanel.add(inputPanel, BorderLayout.NORTH);
         contentPanel = new JPanel(new BorderLayout());
         contentPanel.setPreferredSize(new Dimension(608, 342));
@@ -80,38 +81,19 @@ public class MainFrame extends JFrame {
         wrapperPanel.add(contentPanel, BorderLayout.CENTER);
 
         // add action listeners
-        btnLoadOrg.addActionListener(e -> {
+        btnLoadRoster.addActionListener(e -> {
             JDialog waitDialog = new JDialog(this, "Loading current line-up...", Dialog.ModalityType.APPLICATION_MODAL);
-            waitDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-            waitDialog.setSize(250, 100);
-            waitDialog.setLocationRelativeTo(this);
-            waitDialog.setLayout(new BoxLayout(waitDialog.getContentPane(), BoxLayout.Y_AXIS));
-
-            JLabel waitLabel = new JLabel("<html><div>" +
-                    "<span style='font-size: 10px; font-weight: bold;'>Please wait 🙂</span><br>" +
-                    "It usually takes few seconds.</div></html>");
-            waitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            waitLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            waitDialog.add(waitLabel);
-
-            /*JTextArea waitTextArea = new JTextArea();
-            waitTextArea.setEditable(false);
-            waitTextArea.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder("Status:"),
-                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
-            JScrollPane waitScrollPane = new JScrollPane(waitTextArea);
-            waitDialog.add(waitScrollPane);*/
-
+            initWaitDialog(waitDialog);
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 private String errorMessage = null;
 
                 @Override
                 protected Void doInBackground() {
                     try {
-                        loadOrg((String) cmbTeam.getSelectedItem());
+                        loadRoster((String) cmbOrganisation.getSelectedItem());
+                        showRoster();
                     } catch (UnsupportedOperationException e) {
-                        errorMessage = "The Roster of " + cmbTeam.getSelectedItem() + " for " + cmbTournament.getSelectedItem() + " was not announced yet.";
+                        errorMessage = "The Roster of " + cmbOrganisation.getSelectedItem() + " for " + cmbTournament.getSelectedItem() + " was not announced yet.";
                         // TODO: 07.04.2023 manually add team's roster
                     } catch (Exception e) {
                         errorMessage = e.getMessage();
@@ -129,33 +111,16 @@ public class MainFrame extends JFrame {
                     }
                 }
             };
-
             worker.execute();
-            waitDialog.setVisible(true);
         });
 
         btnMakePrep.addActionListener(e -> {
             JDialog waitDialog = new JDialog(this, "Loading match data...", Dialog.ModalityType.APPLICATION_MODAL);
-            waitDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-            waitDialog.setSize(400, 250);
-            waitDialog.setLocationRelativeTo(this);
-            waitDialog.setLayout(new BoxLayout(waitDialog.getContentPane(), BoxLayout.Y_AXIS));
-
             JLabel waitLabel = new JLabel("<html><div>" +
                     "<span style='font-size: 10px; font-weight: bold;'>Please wait 🙂</span><br>" +
                     "It can take up to several minutes according to the last time you have updated this organization.</div></html>");
-            waitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            waitLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            waitDialog.add(waitLabel);
-
-            JTextArea waitTextArea = new JTextArea();
-            waitTextArea.setEditable(false);
-            waitTextArea.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder("Status:"),
-                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
-            JScrollPane waitScrollPane = new JScrollPane(waitTextArea);
-            waitDialog.add(waitScrollPane);
+            initWaitDialog(waitDialog, waitLabel, new Dimension(400,250));
+            JTextArea statusArea = getStatusArea(waitDialog);
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 private String errorMessage = null;
@@ -163,7 +128,7 @@ public class MainFrame extends JFrame {
                 @Override
                 protected Void doInBackground() {
                     try {
-                        makePrep(waitTextArea);
+                        makePrep(statusArea);
                     } catch (PlayerNotFoundInLoLProsException e) {
                         JOptionPane.showMessageDialog(MainFrame.this, "We could not find LOLPros page of this player: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         // TODO: 07.04.2023 retry or manually add player's soloQ accounts
@@ -184,7 +149,6 @@ public class MainFrame extends JFrame {
             };
 
             worker.execute();
-            waitDialog.setVisible(true);
         });
 
         cmbRegion.addActionListener(e -> cmbRegionAction());
@@ -203,16 +167,6 @@ public class MainFrame extends JFrame {
     private void cmbTournamentAction() {
         JDialog waitDialog = new JDialog(this, "Loading teams...", Dialog.ModalityType.APPLICATION_MODAL);
         initWaitDialog(waitDialog);
-
-            /*JTextArea waitTextArea = new JTextArea();
-            waitTextArea.setEditable(false);
-            waitTextArea.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder("Status:"),
-                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
-            JScrollPane waitScrollPane = new JScrollPane(waitTextArea);
-            waitDialog.add(waitScrollPane);*/
-
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             private String errorMessage = null;
 
@@ -235,9 +189,7 @@ public class MainFrame extends JFrame {
                 }
             }
         };
-
         worker.execute();
-        waitDialog.setVisible(true);
     }
 
     private void initWaitDialog(JDialog waitDialog) {
@@ -252,21 +204,35 @@ public class MainFrame extends JFrame {
         waitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         waitLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         waitDialog.add(waitLabel);
+        waitDialog.setVisible(true);
+    }
+
+    private void initWaitDialog(JDialog waitDialog, JLabel waitLabel, Dimension dimension) {
+        waitDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        waitDialog.setSize(dimension);
+        waitDialog.setLocationRelativeTo(this);
+        waitDialog.setLayout(new BoxLayout(waitDialog.getContentPane(), BoxLayout.Y_AXIS));
+        waitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        waitLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        waitDialog.add(waitLabel);
+        waitDialog.setVisible(true);
+    }
+
+    private JTextArea getStatusArea(JDialog waitDialog) {
+        JTextArea statusArea = new JTextArea();
+        statusArea.setEditable(false);
+        statusArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Status:"),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        JScrollPane waitScrollPane = new JScrollPane(statusArea);
+        waitDialog.add(waitScrollPane);
+        return statusArea;
     }
 
     private void cmbRegionAction() {
         JDialog waitDialog = new JDialog(this, "Loading tournaments...", Dialog.ModalityType.APPLICATION_MODAL);
         initWaitDialog(waitDialog);
-
-            /*JTextArea waitTextArea = new JTextArea();
-            waitTextArea.setEditable(false);
-            waitTextArea.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createTitledBorder("Status:"),
-                    BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
-            JScrollPane waitScrollPane = new JScrollPane(waitTextArea);
-            waitDialog.add(waitScrollPane);*/
-
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             private String errorMessage = null;
 
@@ -290,9 +256,7 @@ public class MainFrame extends JFrame {
                 }
             }
         };
-
         worker.execute();
-        waitDialog.setVisible(true);
     }
 
     private void updateTournaments() throws URISyntaxException, IOException, InterruptedException {
@@ -315,26 +279,26 @@ public class MainFrame extends JFrame {
         String tournament = (String) cmbTournament.getSelectedItem();
         JsonObject jsonObject = DataExtractor.getTeamsByTournament(tournament);
 
-        cmbTeam.removeAllItems();
+        cmbOrganisation.removeAllItems();
         jsonObject.get("cargoquery").getAsJsonArray().forEach(jsonElement -> {
             String teamName = jsonElement.getAsJsonObject()
                     .get("title").getAsJsonObject()
                     .get("Team").getAsString();
-            cmbTeam.addItem(teamName);
+            cmbOrganisation.addItem(teamName);
         });
 
-        cmbTeam.validate();
-        cmbTeam.repaint();
+        cmbOrganisation.validate();
+        cmbOrganisation.repaint();
     }
 
     private void makePrep(JTextArea waitTextArea) throws IOException, URISyntaxException, InterruptedException, PlayerNotFoundInLoLProsException {
-        setStartingLineUp();
-
+        setStartingRoster();
+        
         SwingUtilities.invokeLater(() -> waitTextArea.append("fetching accounts data to players... "));
         DataExtractor.fetchAccountsToPlayers(org);
         SwingUtilities.invokeLater(() -> waitTextArea.append("done\n"));
 
-
+        // TODO: 16.04.2023 show and edit player's accounts 
         /*List<Player> players = org.getRoster().getPlayers();
         for (Player p : players) {
             GUI.showData(p);
@@ -351,10 +315,10 @@ public class MainFrame extends JFrame {
         Path tempFilePath = OutputMaker.makeHTMLOutput(org);
         SwingUtilities.invokeLater(() -> waitTextArea.append("done\n"));
 
-        this.addLinkToPrep(tempFilePath);
+        addLinkToPrep(tempFilePath);
     }
 
-    private void setStartingLineUp() {
+    private void setStartingRoster() {
         List<String> playerNames = new ArrayList<>();
         for (int i = 0; i < tblContent.getRowCount(); i++) {
             playerNames.add((String) tblContent.getValueAt(i,1));
@@ -372,14 +336,10 @@ public class MainFrame extends JFrame {
                 .count();
     }
 
-    private void loadOrg(String orgName) throws URISyntaxException, IOException, InterruptedException {
+    private void loadRoster(String orgName) throws URISyntaxException, IOException, InterruptedException {
         DataExtractor.setTournament((String) cmbTournament.getSelectedItem());
 
         org = DataExtractor.getOrganization(orgName);
-
-        showRoster();
-        validate();
-        repaint();
     }
 
     public void showRoster() {
@@ -389,7 +349,7 @@ public class MainFrame extends JFrame {
         if(tblContentScroll != null)
             contentPanel.remove(tblContentScroll);
 
-        tblContent = new JCellStyleTable(model);
+        tblContent = new RosterTable(model);
         tblContentScroll = new JScrollPane(tblContent);
         model.getEditableCells().forEach(cell -> {
             tblContent.putEditor(cell, new DefaultCellEditor(model.getJComboBox(cell)));
@@ -408,7 +368,7 @@ public class MainFrame extends JFrame {
     }
 
     public void addLinkToPrep(Path tempFilePath) {
-        JButton btnLinkTo = new JButton("Go to prep");
+        JButton btnLinkTo = new JButton("Go to match preparation");
         btnLinkTo.addActionListener(e -> {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 if (Files.exists(tempFilePath)) {

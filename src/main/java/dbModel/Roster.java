@@ -1,8 +1,6 @@
 package dbModel;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,7 +15,7 @@ public class Roster implements Insertable{
     private Long id;
     private Integer nOfChanges;
     @ManyToOne(cascade = CascadeType.MERGE)
-    private Organization org;
+    private Organisation org;
     @ManyToMany(cascade = CascadeType.ALL)
     private List<Player> players = new ArrayList<>();
     @OneToMany(mappedBy = "roster", cascade = CascadeType.ALL)
@@ -27,7 +25,7 @@ public class Roster implements Insertable{
     public Roster() {
     }
 
-    public Roster(Organization org, List<Player> players) {
+    public Roster(Organisation org, List<Player> players) {
         this.org = org;
         this.players = players;
     }
@@ -44,11 +42,11 @@ public class Roster implements Insertable{
         this.lastUpdated = lastUpdated;
     }
 
-    public Organization getOrg() {
+    public Organisation getOrg() {
         return org;
     }
 
-    public Roster setOrg(Organization org) {
+    public Roster setOrg(Organisation org) {
         this.org = org;
         return this;
     }

@@ -12,7 +12,6 @@ public class CellBasedTableModel extends DefaultTableModel {
     private Collection<Cell> editableCells = new HashSet<>();
 
     public CellBasedTableModel() {
-        // TODO Auto-generated constructor stub
     }
 
     @Override
