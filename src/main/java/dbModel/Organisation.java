@@ -9,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "organizations")
-public class Organisation implements Showable, Insertable {
+public class Organisation implements Insertable {
     @Id
     private String name;
     @NaturalId
@@ -62,33 +62,8 @@ public class Organisation implements Showable, Insertable {
     @Override
     public String toString() {
         return "Organization{" +
-                "name='" + name + '\'' +
-                ", shortcut='" + shortcut + '\'' +
                 ", rosters=" + rosters +
                 ", startingLineUp=" + startingLineUp +
                 '}';
-    }
-
-    @Override
-    public String getHeader() {
-        return name;
-    }
-
-    @Override
-    public String[] getColumnNames() {
-        return new String[]{"Role", "Name"};
-    }
-
-    @Override
-    public String[][] getContent() {
-        List<Player> players = getLastRoster().getPlayers();
-        players.sort(Comparator.comparing(Player::getRole));
-        String[][] content = new String[players.size()][2];;
-        for (int i = 0; i < players.size(); i++) {
-            content[i][0] = players.get(i).getRole().name();
-            content[i][1] = players.get(i).getName();
-        }
-
-        return content;
     }
 }

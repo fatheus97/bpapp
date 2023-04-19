@@ -6,7 +6,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "players")
-public class Player implements Showable, Insertable {
+public class Player implements Insertable {
     @Id
     private String name;
     @Enumerated(EnumType.STRING)
@@ -53,26 +53,6 @@ public class Player implements Showable, Insertable {
                 ", role=" + role +
                 ", accounts=" + accounts +
                 '}';
-    }
-
-    @Override
-    public String getHeader() {
-        return name;
-    }
-
-    @Override
-    public String[] getColumnNames() {
-        return new String[0];
-    }
-
-    @Override
-    public String[][] getContent() {
-        /*List<String> content = new ArrayList<>();
-        for (Account a : accounts) {
-            content.add(a.getName());
-        }
-        return content;*/
-        return null;
     }
 
     public void deleteAccount(String puuid) {

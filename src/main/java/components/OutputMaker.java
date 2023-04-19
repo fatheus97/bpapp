@@ -5,28 +5,44 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OutputMaker {
     private static Document doc;
     private static int width;
     private static int height;
-    private static final List<Area> areaList = new ArrayList<>();
+    private static final Properties props = new Properties();
+    static {
+        try {
+            props.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static final int radius = Integer.parseInt(props.getProperty("heatmap.radius"));
 
-    public static Path makeHTMLOutput(Organisation organisation) throws IOException {
+    public static Path makeHTMLOutput(Organisation organisation) throws IOException, ArrayIndexOutOfBoundsException {
         // create a new HTML document
         doc = Document.createShell("");
         Element head = doc.head();
+
+        doc.head().append("""
+            <!-- Load c3.css -->
+            <link href="../js/c3/c3.css" rel="stylesheet">
+    
+            <!-- Load d3.js and c3.js -->
+            <script src="../js/d3/d3.min.js" charset="utf-8"></script>
+            <script src="../js/c3/c3.min.js"></script>""");
+
         Element body = doc.body();
 
         // add a title to the document
@@ -40,144 +56,155 @@ public class OutputMaker {
 
         addInfographics(roster);
         addHeatmaps(roster);
+        addGraphs(roster);
 
-        Path tempFilePath = getTempFilePath("LOLPrep", ".html");
+        Path filePath = Paths.get("output/LoLPrep.html");
+        Files.createDirectories(filePath.getParent());
 
         // write the HTML document to the temporary file
-        try (BufferedWriter writer = Files.newBufferedWriter(tempFilePath)) {
-            writer.write(doc.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        BufferedWriter writer = Files.newBufferedWriter(filePath);
+        writer.write(doc.toString());
 
-        return tempFilePath;
+        writer.close();
+
+        return filePath;
     }
 
-    private static Path getTempFilePath(String prefix, String suffix) {
-        Path tempFilePath;
-        try {
-            tempFilePath = Files.createTempFile(prefix, suffix);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return tempFilePath;
+    private static void addGraphs(Roster roster) {
+        long[] gold = new long[100];
+        Player player = roster.getPlayers().get(0);
+        roster.getMatches().forEach(match -> {
+            Optional<Long> participantID = match.getInfo().getParticipants().stream().filter(participant -> Objects.equals(participant.getSummonerName(), roster.getOrg().getShortcut() + " " + player.getName())).map(Participant::getParticipantId).findFirst();
+            if (participantID.isPresent())
+                match.getTimeline().getFrames().forEach(frame -> frame.getParticipantFrames().forEach((s, participantFrame) -> {
+                    if (participantID.get() <= 5) {
+                        if (Integer.parseInt(s) <= 5) {
+                            gold[(int) (frame.getTimestamp()/60000)] += participantFrame.getCurrentGold();
+                        }
+                    } else {
+                        if (Integer.parseInt(s) > 5) {
+                            gold[(int) (frame.getTimestamp()/60000)] += participantFrame.getCurrentGold();
+                        }
+                    }
+                }));
+        });
+
+        String goldData = Arrays.stream(gold).filter(value -> value != 0).mapToObj(Long::toString).collect(Collectors.joining(","));
+
+        doc.body().appendElement("div").attr("id","goldChart");
+        doc.body().appendElement("script").append("var chart = c3.generate({\n" +
+                "    bindto: '#goldChart',\n" +
+                "    data: {\n" +
+                "      columns: [\n" +
+                "        ['gold'," + goldData + "],\n" +
+                "      ]\n" +
+                "    }\n" +
+                "});");
     }
 
-    private static void addHeatmaps(Roster roster) throws IOException {
+    private static void addHeatmaps(Roster roster) throws IOException, ArrayIndexOutOfBoundsException {
         Optional<Player> optionalPlayer = roster.getPlayers().stream().filter(player -> player.getRole() == Role.JUNGLE).findFirst();
         if (optionalPlayer.isPresent())
-            addJunglersHeatmap(optionalPlayer.get(), roster);
+            addHeatmap(optionalPlayer.get(), roster);
+        optionalPlayer = roster.getPlayers().stream().filter(player -> player.getRole() == Role.SUPPORT).findFirst();
+        if (optionalPlayer.isPresent())
+            addHeatmap(optionalPlayer.get(), roster);
     }
 
-    private static void addJunglersHeatmap(Player player, Roster roster) throws IOException {
-        int opacity = 50;
-        int circleRadius = 20;
-
-        // Load the background image
+    private static void addHeatmap(Player player, Roster roster) throws IOException, ArrayIndexOutOfBoundsException {
         BufferedImage image = ImageIO.read(new File("src/main/resources/background.png"));
         width = image.getWidth();
         height = image.getHeight();
+        int[][] heatmap = new int[width][height];
         Graphics2D g2d = image.createGraphics();
 
-        // Draw red circles at specified positions soloq
-        player.getAccounts().forEach(account -> {
-            String puuid = account.getPuuid();
-            account.getMatches().forEach(match -> {
-                System.out.println(match);
-                Long participantID = match.getInfo().getParticipants().stream()
-                        .filter(participant -> participant.getPuuid().equals(puuid))
-                        .map(Participant::getParticipantId).findFirst().get();
-                match.getTimeline().getFrames().forEach(frame -> {
-                    frame.getParticipantFrames().forEach((s, participantFrame) -> {
-                        if (participantFrame.getParticipantId() == participantID) {
-                            int x = (int) participantFrame.getPosition().getX()/5;
-                            int y = (int) participantFrame.getPosition().getY()/5;
-                            if ((x>150||y>150)&&(x<2800||y<2800)) {
-                                drawCircle(0, new Ellipse2D.Float(x - circleRadius, height - (y - circleRadius), circleRadius * 2, circleRadius * 2));
-                            }
-                        }
-                    });
-                    /*frame.getEvents().forEach(event -> {
-                        if (Objects.equals(event.getParticipantID(), participantID)) {
-                            int x = (int) event.getPosition().getX()/5;
-                            int y = (int) event.getPosition().getY()/5;
-                            g2d.fill(new Ellipse2D.Float(x-circleRadius, y-circleRadius, circleRadius * 2, circleRadius * 2));
-                        }
-                    });*/
-                });
-            });
-        });
+        addSoloQFrames(player, heatmap);
+        addCompetitiveFrames(roster, heatmap);
 
+        drawHeatmap(heatmap, image);
 
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN, 1f));
+        BufferedImage mapImage = ImageIO.read(new File("src/main/resources/background.png"));
+        g2d.drawImage(mapImage, 0, 0, null);
+
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        BufferedImage wallsImage = ImageIO.read(new File("src/main/resources/walls.png"));
+        g2d.drawImage(wallsImage, 0, 0, null);
+        BufferedImage borderImage = ImageIO.read(new File("src/main/resources/border.png"));
+        g2d.drawImage(borderImage, 0, 0, null);
+
+        g2d.dispose();
+
+        ImageIO.write(image, "png", new File("output/" + player.getName() + "_heatmap.png"));
+
+        Path filePath = Paths.get("output/" + player.getName() + "_heatmap.png");
+
+        doc.body().appendElement("img").attr("src", filePath.toUri().toURL().toString()).attr("style","max-width:100%;");
+    }
+
+    private static void addCompetitiveFrames(Roster roster, int[][] heatmap) throws ArrayIndexOutOfBoundsException {
         roster.getMatches().forEach(match -> {
             String summonerName = roster.getOrg().getShortcut() + " " + roster.getPlayers().stream().filter(player1 -> player1.getRole().equals(Role.TOP)).map(Player::getName).findFirst().get();
             Optional<Long> participantID = match.getInfo().getParticipants().stream().filter(participant -> participant.getSummonerName().equals(summonerName)).map(Participant::getParticipantId).findFirst();
-            if (participantID.isPresent()) {
-                System.out.println(match);
-
-                match.getTimeline().getFrames().forEach(frame -> {
-                    ParticipantFrame participantFrame = frame.getParticipantFrames().get(participantID.get().toString());
-                    System.out.println(participantFrame.getPosition().getX() + " " + participantFrame.getPosition().getY());
-                    int x = (int) participantFrame.getPosition().getX()/5;
-                    int y = (int) participantFrame.getPosition().getY()/5;
-                    if ((x>100||y>100)&&(x<2900||y<2900))
-                                drawCircle(0, new Ellipse2D.Float(x-circleRadius, height-(y-circleRadius), circleRadius * 2, circleRadius * 2));
-                });
-                    /*frame.getEvents().forEach(event -> {
-                        if (event.getParticipantID() == participantID.get()) {
-                            int x = (int) event.getPosition().getX() / 5;
-                            int y = (int) event.getPosition().getY() / 5;
-                            g2d.fill(new Ellipse2D.Float(x - circleRadius, y - circleRadius, circleRadius * 2, circleRadius * 2));
-                        }
-                    });*/
-            }
+            participantID.ifPresent(aLong -> match.getTimeline().getFrames().forEach(frame -> {
+                ParticipantFrame participantFrame = frame.getParticipantFrames().get(aLong.toString());
+                drawCircle(participantFrame, heatmap);
+            }));
         });
-
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
-        int size = areaList.size();
-        for (int i = 0; i < size; i++) {
-            Area area = areaList.get(i);
-            g2d.setColor(new Color(1f,0f,0f, ((float)i+1f) / (float)size));
-            g2d.fill(area);
-        }
-
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        // Load the overlay image
-        BufferedImage overlayImage = ImageIO.read(new File("src/main/resources/walls.png"));
-        // Draw the overlay image
-        g2d.drawImage(overlayImage, 0, 0, null);
-
-        // Dispose the Graphics2D object
-        g2d.dispose();
-
-        Path tempFilePath = getTempFilePath("heatmapJungler", ".png");
-
-        // Save the heatmap image to file
-        try (BufferedWriter writer = Files.newBufferedWriter(tempFilePath)) {
-            ImageIO.write(image, "png", tempFilePath.toFile());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        // Add the image ref to the HTML
-        doc.body().appendElement("img").attr("src", tempFilePath.toUri().toURL().toString()).attr("style","max-width:100%;");
     }
 
-    private static void drawCircle(int i, Shape shape) {
-        if (areaList.size() <= i) {
-            areaList.add(new Area());
+    private static void addSoloQFrames(Player player, int[][] heatmap) throws ArrayIndexOutOfBoundsException {
+        player.getAccounts().forEach(account -> {
+            String puuid = account.getPuuid();
+            account.getMatches().forEach(match -> {
+                Optional<Long> participantID = match.getInfo().getParticipants().stream()
+                        .filter(participant -> participant.getPuuid().equals(puuid))
+                        .map(Participant::getParticipantId).findFirst();
+                participantID.ifPresent(aLong -> match.getTimeline().getFrames().forEach(frame -> {
+                    frame.getParticipantFrames().forEach((s, participantFrame) -> {
+                        if (participantFrame.getParticipantId() == aLong) {
+                            drawCircle(participantFrame, heatmap);
+                        }
+                    });
+                }));
+            });
+        });
+    }
+
+    private static void drawCircle(ParticipantFrame participantFrame, int[][] heatmap) throws ArrayIndexOutOfBoundsException{
+        int x = (int) participantFrame.getPosition().getX()/10;
+        int y = height - (int) participantFrame.getPosition().getY()/10;
+        if ((x<1350||y>150)&&(x>150||y<1350)) {
+            int m = 0;
+            while (2 + 2 * m < (radius - 1 - 2 * m) * Math.sqrt(2)) {
+                m++;
+            }
+            for (int i = m; i < radius * 2 + 1 - m; i++) {
+                if (i > radius - m && i < radius + m) {
+                    for (int j = m + i - radius; j < i * 2 + 1 - (m + i - radius); j++) {
+                        heatmap[x - i + j][y - radius + i]++;
+                    }
+                } else if (i <= radius) {
+                    for (int j = 0; j < i * 2 + 1; j++) {
+                        heatmap[x - i + j][y - radius + i]++;
+                    }
+                } else {
+                    for (int j = 0; j < 4 * radius + 1 - 2 * i; j++) {
+                        heatmap[x + i - 2 * radius + j][y - radius + i]++;
+                    }
+                }
+            }
         }
-        Area area = areaList.get(i);
+    }
 
-        Area intersection = (Area) area.clone();
-
-        area.add(new Area(shape));
-
-        intersection.intersect(new Area(shape));
-
-        if (!intersection.isEmpty()) {
-            drawCircle(i+1, intersection);
+    private static void drawHeatmap(int[][] heatmap, BufferedImage image) {
+        int max = Arrays.stream(heatmap).flatMapToInt(Arrays::stream).max().getAsInt();
+        if (max>0) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    image.setRGB(i, j, new Color(heatmap[i][j] * (255 / max), 255 - heatmap[i][j] * (255 / max), 150 - heatmap[i][j] * (150 / max)).getRGB());
+                }
+            }
         }
     }
 

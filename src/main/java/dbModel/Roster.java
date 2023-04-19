@@ -62,10 +62,10 @@ public class Roster implements Insertable{
     @Override
     public String toString() {
         return "Roster{" +
-                "id=" + id +
-                ", players=" + players +
+                "matches=" + matches +
                 '}';
     }
+
     public String playersToString() {
         return players.stream().map(Player::getName).collect(Collectors.joining(","));
     }

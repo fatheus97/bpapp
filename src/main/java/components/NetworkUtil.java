@@ -88,10 +88,8 @@ public class NetworkUtil {
             else if (httpResponse.statusCode() == 429 || httpResponse.statusCode() == 503) {
                 if(httpResponse.headers().firstValueAsLong("Retry-After").isPresent()) {
                     long sleepTime = httpResponse.headers().firstValueAsLong("Retry-After").getAsLong();
-                    System.out.println(sleepTime);
                     Thread.sleep(sleepTime);
                 } else {
-                    System.out.println("10000 set");
                     Thread.sleep(10000);
                 }
                 retryRequest = true;
