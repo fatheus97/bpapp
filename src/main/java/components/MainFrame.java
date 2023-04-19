@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class MainFrame extends JFrame {
     private Organisation org;
@@ -32,6 +33,16 @@ public class MainFrame extends JFrame {
     private final JComboBox<String> cmbRegion;
     private final JComboBox<String> cmbTournament;
     private final JComboBox<String> cmbOrganisation;
+
+    private static final Properties props = new Properties();
+    static {
+        try {
+            props.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static final String[] REGIONS = props.getProperty("regions").split(",");
 
     public MainFrame() {
         // set frame properties
@@ -58,7 +69,7 @@ public class MainFrame extends JFrame {
         JButton btnLoadRoster = new JButton("Show organisation's roster");
         btnOpenOutput = new JButton("Go to match preparation");
         btnMakePrep = new JButton("Confirm roster to continue");
-        cmbRegion = new JComboBox<>(new String[]{"EMEA"}); // TODO: 17.04.2023 configuration file move
+        cmbRegion = new JComboBox<>(REGIONS); // TODO: 17.04.2023 configuration file move
         cmbTournament = new JComboBox<>();
         cmbOrganisation = new JComboBox<>();
 
@@ -364,14 +375,6 @@ public class MainFrame extends JFrame {
         List<Player> players = org.getLastRoster().getPlayers();
         players.removeIf(player -> !playerNames.contains(player.getName()));
         org.setStartingLineUp(new Roster(org, players));
-    }
-
-    private int getRosterChangeCount(List<String> playerNames) {
-        List<Player> players = org.getRoster(1).getPlayers();
-        return (int) playerNames.stream()
-                .filter(name -> players.stream()
-                        .noneMatch(player -> player.getName().equals(name)))
-                .count();
     }
 
     private void loadRoster(String orgName) throws URISyntaxException, IOException, InterruptedException {

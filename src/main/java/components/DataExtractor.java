@@ -26,7 +26,7 @@ public class DataExtractor {
     private static String tournament;
     private static final int START_DAYS = Integer.parseInt(props.getProperty("start.days"));
     private static final int END_DAYS = Integer.parseInt(props.getProperty("end.days"));
-    private static final int LOLFANDOM_API = Integer.parseInt(props.getProperty("lolfandom.api"));
+    private static final String LOLFANDOM_API = props.getProperty("lolfandom.api");
     private static final GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
         @Override
         public boolean shouldSkipField(FieldAttributes fieldAttributes) {
@@ -326,9 +326,8 @@ public class DataExtractor {
                 " AND DateStart IS NOT NULL" +
                 " AND DateStart >= " + TimeUtil.getUTCString(365, DateTimeFormatter.ofPattern("yyyyMMddhhmmss")) +
                 "&order_by=DateStart DESC";
-        String jsonString = "";
 
-        jsonString = NetworkUtil.getJSONFromURLString(urlString);
+        String jsonString = NetworkUtil.getJSONFromURLString(urlString);
 
         return getJsonObject(jsonString);
     }
