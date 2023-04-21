@@ -13,7 +13,7 @@ public class Roster implements Insertable{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private Integer nOfChanges;
+    private Integer nOfChanges; //for future development
     @ManyToOne(cascade = CascadeType.MERGE)
     private Organisation org;
     @ManyToMany(cascade = CascadeType.ALL)
@@ -28,10 +28,6 @@ public class Roster implements Insertable{
     public Roster(Organisation org, List<Player> players) {
         this.org = org;
         this.players = players;
-    }
-
-    public Integer getNOfChanges() {
-        return nOfChanges;
     }
 
     public LocalDateTime getLastUpdated() {
@@ -53,10 +49,6 @@ public class Roster implements Insertable{
 
     public List<Match> getMatches() {
         return matches;
-    }
-
-    public void setNOfChanges(Integer nOfChanges) {
-        this.nOfChanges = nOfChanges;
     }
 
     @Override

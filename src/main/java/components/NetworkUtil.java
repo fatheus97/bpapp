@@ -13,13 +13,13 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class NetworkUtil {
-    private static int count = 0;
     private static final Properties props = new Properties();
     static {
         try {
@@ -46,10 +46,9 @@ public class NetworkUtil {
         String[] queryArray = query.split("&");
 
         for (int i = 0; i < queryArray.length; i++) {
-            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(Arrays.stream(queryArray[i].substring(queryArray[i].indexOf("=") + 1).split("AND")).toList().stream().map(s -> s.replaceAll("(?<==)'([^']*)'([^']*)'","'$1\\\\'$2'")).collect(Collectors.joining("AND")));
+            queryArray[i] = queryArray[i].substring(0, queryArray[i].indexOf("=") + 1) + URLEncoder.encode(Arrays.stream(queryArray[i].substring(queryArray[i].indexOf("=") + 1).split("AND")).toList().stream().map(s -> s.replaceAll("(?<==)'([^']*)'([^']*)'","'$1\\\\'$2'")).collect(Collectors.joining("AND")), StandardCharsets.UTF_8);
         }
         query = String.join("&", queryArray);
-        System.out.println(baseURL + query);
         return baseURL + query;
     }
 
@@ -70,17 +69,16 @@ public class NetworkUtil {
         URI uri = new URI(encodeURLString(urlString));
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(uri).build();
-        if(urlString.contains("api.riotgames.com")){
-            riotBucket.asBlocking().consume(1);
+        if(urlString.contains("api.riotgames.com"))
             httpRequest = HttpRequest.newBuilder(uri)
                     .header("X-Riot-Token", APIKEY)
                     .build();
-            System.out.println(count++ + "  " + urlString);
-        }
-        boolean retryRequest = false;
-        HttpResponse<String> httpResponse = null;
+        boolean retryRequest;
+        HttpResponse<String> httpResponse;
         do {
             retryRequest = false;
+            if(urlString.contains("api.riotgames.com"))
+                riotBucket.asBlocking().consume(1);
             httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (httpResponse.statusCode() == 403)

@@ -1,6 +1,7 @@
-package dbModel;
+package extracting;
 
 import com.fasterxml.jackson.annotation.*;
+import dbModel.Info;
 
 public class MatchWrapper {
     private Info info;

@@ -9,37 +9,22 @@ import org.hibernate.cfg.Configuration;
 public class DatabaseManager {
     private static final Configuration configuration = new Configuration().configure();
     private static final SessionFactory sessionFactory = configuration.buildSessionFactory();
-
     private static Session session;
-
-    public static void main(String[] args) {
-
-    }
+    private DatabaseManager(){}
 
     public static void insertObject(Insertable obj) {
-        // Begin a new transaction
         Transaction transaction = session.beginTransaction();
-
-        // Save the match object to the database
         session.merge(obj);
-
-        // Commit the transaction
         transaction.commit();
-
-        // Close the session
-        session.close();
-    }
-
-    public static void openSession() {
-        session = sessionFactory.openSession();
-    }
-    public static void closeSession() {
-        session.close();
     }
     public static void closeSessionFactory() {
+        if (session != null)
+            session.close();
         sessionFactory.close();
     }
     public static <T> T getObject(Class<T> objectClass, String objectID) {
+        if (session == null)
+            session = sessionFactory.openSession();
         return session.get(objectClass, objectID);
     }
 }

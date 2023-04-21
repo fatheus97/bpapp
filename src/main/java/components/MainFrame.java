@@ -57,8 +57,7 @@ public class MainFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-            DatabaseManager.closeSession();
-            DatabaseManager.closeSessionFactory();
+                DatabaseManager.closeSessionFactory();
             }
         });
 
@@ -336,6 +335,7 @@ public class MainFrame extends JFrame {
         for (Player p : players) {
             GUI.showData(p);
         }*/
+
         SwingUtilities.invokeLater(() -> waitTextArea.append("fetching matches data to rosters... "));
         for (Roster roster : org.getRosters()) {
             DataExtractor.fetchMatchesToRoster(roster);
