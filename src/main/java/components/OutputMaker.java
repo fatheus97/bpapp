@@ -14,10 +14,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class OutputMaker {
-    private static Document doc;
+    private static Element container;
     private static int width;
     private static int height;
     private static final Properties props = new Properties();
@@ -29,13 +28,12 @@ public class OutputMaker {
         }
     }
     private static final int radius = Integer.parseInt(props.getProperty("heatmap.radius"));
-
+    private OutputMaker(){}
     public static Path makeHTMLOutput(Organisation organisation) throws IOException, ArrayIndexOutOfBoundsException {
-        // create a new HTML document
-        doc = Document.createShell("");
+        Document doc = Document.createShell("");
         Element head = doc.head();
 
-        doc.head().append("""
+        head.append("""
             <!-- Load c3.css -->
             <link href="../js/c3/c3.css" rel="stylesheet">
     
@@ -43,25 +41,31 @@ public class OutputMaker {
             <script src="../js/d3/d3.min.js" charset="utf-8"></script>
             <script src="../js/c3/c3.min.js"></script>""");
 
-        Element body = doc.body();
-
-        // add a title to the document
         head.appendElement("title").text("Prep sheet for match vs " + organisation.getName());
+        head.appendElement("link").attr("rel", "icon")
+                .attr("href", "../src/main/resources/icon.png")
+                .attr("sizes","128x128")
+                .attr("type","image/png");
+        head.appendElement("link").attr("rel","stylesheet")
+                .attr("href","../src/main/resources/styles.css");
 
-        // add a header to the document
-        Element h1 = body.appendElement("h1");
+        container = doc.createElement("div");
+        container.addClass("container");
+        container.appendElement("div").attr("id","background");
+        doc.body().appendChild(container);
+
+        Element h1 = container.appendElement("h1");
         h1.text("Prep sheet for match vs " + organisation.getName());
 
         Roster roster = organisation.getLastRoster();
 
-        addInfographics(roster);
-        addHeatmaps(roster);
-        addGraphs(roster);
-
         Path filePath = Paths.get("output/LoLPrep.html");
         Files.createDirectories(filePath.getParent());
 
-        // write the HTML document to the temporary file
+        addInfographics(roster);
+        addGraphs(roster);
+        addHeatmaps(roster);
+
         BufferedWriter writer = Files.newBufferedWriter(filePath);
         writer.write(doc.toString());
 
@@ -71,35 +75,48 @@ public class OutputMaker {
     }
 
     private static void addGraphs(Roster roster) {
+        addGoldGraph(roster);
+    }
+
+    private static void addGoldGraph(Roster roster) {
+        container.appendElement("h2").text("Gold graph of " + roster.getOrg().getName() + " competitive matches");
         long[] gold = new long[100];
-        Player player = roster.getPlayers().get(0);
-        roster.getMatches().forEach(match -> {
-            Optional<Long> participantID = match.getInfo().getParticipants().stream().filter(participant -> Objects.equals(participant.getSummonerName(), roster.getOrg().getShortcut() + " " + player.getName())).map(Participant::getParticipantId).findFirst();
-            if (participantID.isPresent())
+        long NofMatches = roster.getMatches().size();
+        if (NofMatches > 0) {
+            roster.getMatches().forEach(match -> {
+                boolean blue = isBlue(roster, match);
                 match.getTimeline().getFrames().forEach(frame -> frame.getParticipantFrames().forEach((s, participantFrame) -> {
-                    if (participantID.get() <= 5) {
+                    if (blue) {
                         if (Integer.parseInt(s) <= 5) {
-                            gold[(int) (frame.getTimestamp()/60000)] += participantFrame.getCurrentGold();
+                            gold[(int) (frame.getTimestamp() / 60000)] += participantFrame.getCurrentGold();
                         }
                     } else {
                         if (Integer.parseInt(s) > 5) {
-                            gold[(int) (frame.getTimestamp()/60000)] += participantFrame.getCurrentGold();
+                            gold[(int) (frame.getTimestamp() / 60000)] += participantFrame.getCurrentGold();
                         }
                     }
                 }));
-        });
+            });
 
-        String goldData = Arrays.stream(gold).filter(value -> value != 0).mapToObj(Long::toString).collect(Collectors.joining(","));
 
-        doc.body().appendElement("div").attr("id","goldChart");
-        doc.body().appendElement("script").append("var chart = c3.generate({\n" +
-                "    bindto: '#goldChart',\n" +
-                "    data: {\n" +
-                "      columns: [\n" +
-                "        ['gold'," + goldData + "],\n" +
-                "      ]\n" +
-                "    }\n" +
-                "});");
+            String goldData = Arrays.stream(gold).map(value -> value / NofMatches).filter(value -> value != 0).mapToObj(Long::toString).collect(Collectors.joining(","));
+
+            container.appendElement("div").attr("id", "goldChart");
+            container.appendElement("script").append("var chart = c3.generate({\n" +
+                    "    bindto: '#goldChart',\n" +
+                    "    data: {\n" +
+                    "      columns: [\n" +
+                    "        ['gold'," + goldData + "],\n" +
+                    "      ]\n" +
+                    "    }\n" +
+                    "});");
+        }
+    }
+
+    private static boolean isBlue(Roster roster, Match match) {
+        Player player = roster.getPlayers().get(0);
+        Optional<Long> participantID = match.getInfo().getParticipants().stream().filter(participant -> Objects.equals(participant.getSummonerName(), roster.getOrg().getShortcut() + " " + player.getName())).map(Participant::getParticipantId).findFirst();
+        return participantID.get() <= 5;
     }
 
     private static void addHeatmaps(Roster roster) throws IOException, ArrayIndexOutOfBoundsException {
@@ -112,17 +129,18 @@ public class OutputMaker {
     }
 
     private static void addHeatmap(Player player, Roster roster) throws IOException, ArrayIndexOutOfBoundsException {
+        container.appendElement("h2").text("Heatmap of " + player.getRole() + " (" + player.getName() + ")");
         BufferedImage image = ImageIO.read(new File("src/main/resources/background.png"));
         width = image.getWidth();
         height = image.getHeight();
         int[][] heatmap = new int[width][height];
-        Graphics2D g2d = image.createGraphics();
 
         addSoloQFrames(player, heatmap);
         addCompetitiveFrames(roster, heatmap);
 
         drawHeatmap(heatmap, image);
 
+        Graphics2D g2d = image.createGraphics();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN, 1f));
         BufferedImage mapImage = ImageIO.read(new File("src/main/resources/background.png"));
         g2d.drawImage(mapImage, 0, 0, null);
@@ -139,7 +157,7 @@ public class OutputMaker {
 
         Path filePath = Paths.get("output/" + player.getName() + "_heatmap.png");
 
-        doc.body().appendElement("img").attr("src", filePath.toUri().toURL().toString()).attr("style","max-width:100%;");
+        container.appendElement("img").attr("src", filePath.toUri().toURL().toString()).addClass("image");
     }
 
     private static void addCompetitiveFrames(Roster roster, int[][] heatmap) throws ArrayIndexOutOfBoundsException {
@@ -148,7 +166,7 @@ public class OutputMaker {
             Optional<Long> participantID = match.getInfo().getParticipants().stream().filter(participant -> participant.getSummonerName().equals(summonerName)).map(Participant::getParticipantId).findFirst();
             participantID.ifPresent(aLong -> match.getTimeline().getFrames().forEach(frame -> {
                 ParticipantFrame participantFrame = frame.getParticipantFrames().get(aLong.toString());
-                drawCircle(participantFrame, heatmap);
+                drawCircle(participantFrame, heatmap, 5);
             }));
         });
     }
@@ -160,18 +178,16 @@ public class OutputMaker {
                 Optional<Long> participantID = match.getInfo().getParticipants().stream()
                         .filter(participant -> participant.getPuuid().equals(puuid))
                         .map(Participant::getParticipantId).findFirst();
-                participantID.ifPresent(aLong -> match.getTimeline().getFrames().forEach(frame -> {
-                    frame.getParticipantFrames().forEach((s, participantFrame) -> {
-                        if (participantFrame.getParticipantId() == aLong) {
-                            drawCircle(participantFrame, heatmap);
-                        }
-                    });
-                }));
+                participantID.ifPresent(aLong -> match.getTimeline().getFrames().forEach(frame -> frame.getParticipantFrames().forEach((s, participantFrame) -> {
+                    if (participantFrame.getParticipantId() == aLong) {
+                        drawCircle(participantFrame, heatmap, 1);
+                    }
+                })));
             });
         });
     }
 
-    private static void drawCircle(ParticipantFrame participantFrame, int[][] heatmap) throws ArrayIndexOutOfBoundsException{
+    private static void drawCircle(ParticipantFrame participantFrame, int[][] heatmap, int value) throws ArrayIndexOutOfBoundsException{
         int x = (int) participantFrame.getPosition().getX()/10;
         int y = height - (int) participantFrame.getPosition().getY()/10;
         if ((x<1350||y>150)&&(x>150||y<1350)) {
@@ -182,15 +198,15 @@ public class OutputMaker {
             for (int i = m; i < radius * 2 + 1 - m; i++) {
                 if (i > radius - m && i < radius + m) {
                     for (int j = m + i - radius; j < i * 2 + 1 - (m + i - radius); j++) {
-                        heatmap[x - i + j][y - radius + i]++;
+                        heatmap[x - i + j][y - radius + i] = heatmap[x - i + j][y - radius + i]+value;
                     }
                 } else if (i <= radius) {
                     for (int j = 0; j < i * 2 + 1; j++) {
-                        heatmap[x - i + j][y - radius + i]++;
+                        heatmap[x - i + j][y - radius + i] = heatmap[x - i + j][y - radius + i]+value;
                     }
                 } else {
                     for (int j = 0; j < 4 * radius + 1 - 2 * i; j++) {
-                        heatmap[x + i - 2 * radius + j][y - radius + i]++;
+                        heatmap[x + i - 2 * radius + j][y - radius + i] = heatmap[x + i - 2 * radius + j][y - radius + i]+value;
                     }
                 }
             }
@@ -209,36 +225,60 @@ public class OutputMaker {
     }
 
     private static void addInfographics(Roster roster) {
+        addCompetitiveGameRecord(roster);
         addCompetitiveChampPool(roster);
         addSoloQChampPool(roster);
     }
 
+    private static void addCompetitiveGameRecord(Roster roster) {
+        container.appendElement("h2").text("Competitive Game Record");
+        Element div = container.appendElement("div").attr("style", "display: flex; align-items: flex-start");
+        roster.getMatches().forEach(match -> {
+            boolean blue = isBlue(roster, match);
+            boolean win;
+            if (blue)
+                win = match.getInfo().getTeams().stream().filter(team -> team.getTeamId()==100).findFirst().get().getWin();
+            else
+                win = match.getInfo().getTeams().stream().filter(team -> team.getTeamId()==200).findFirst().get().getWin();
+            if (win)
+                div.appendElement("div").text("W").attr("style", "background-color: lawngreen;font-size: 32px;padding: 4px;border:1px solid #ccc;");
+            else
+                div.appendElement("div").text("L").attr("style", "background-color: red;font-size: 32px;padding: 4px;border:1px solid #ccc;");
+        });
+    }
+
     private static void addSoloQChampPool(Roster roster) {
-        doc.body().appendElement("h2").text("SoloQ Champ pool");
-        Element div = doc.body().appendElement("div").attr("style", "display:flex;align-items: flex-start");
+        container.appendElement("h2").text("SoloQ Champ pool");
+        Element div = container.appendElement("div").attr("style", "display: flex; align-items: flex-start");
         roster.getPlayers().forEach(player -> {
             Element table = div.appendElement("table");
-            Element trh = table.appendElement("tr");
+            Element trIcon = table.appendElement("tr").attr("style", "background-color: #E7E9EB; border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
+            trIcon.appendElement("th").attr("colspan", "2").appendElement("img").attr("src", "../src/main/resources/" + player.getRole() + ".png");
+            Element trh = table.appendElement("tr").attr("style", "background-color: #E7E9EB; border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
             trh.appendElement("th").text(player.getName()).attr("colspan", "2");
             getSoloQChampPool(player).forEach((k,v) -> {
-                Element trd = table.appendElement("tr");
-                trd.appendElement("td").text(k);
-                trd.appendElement("td").text(String.valueOf(v));
+                if (v >= 1) {
+                    Element trd = table.appendElement("tr").attr("style", "background-color: rgba(255," + (255 - v * 3) + ",0,15);; border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
+                    trd.appendElement("td").text(k).attr("style", "padding-left: 20%;padding: 8px 8px; display: table-cell; text-align: left; vertical-align: top;border-collapse: collapse; border-spacing: 0;");
+                    trd.appendElement("td").text(String.valueOf(v)).attr("style", "padding: 8px 8px; display: table-cell; text-align: left; vertical-align: top;border-collapse: collapse; border-spacing: 0;");
+                }
             });
         });
     }
 
     private static void addCompetitiveChampPool(Roster roster) {
-        doc.body().appendElement("h2").text("Competitive Champ pool");
-        Element div = doc.body().appendElement("div").attr("style", "display:flex;align-items: flex-start");
+        container.appendElement("h2").text("Competitive Champ pool");
+        Element div = container.appendElement("div").attr("style", "display:flex;align-items: flex-start");
         roster.getPlayers().forEach(player -> {
             Element table = div.appendElement("table");
-            Element trh = table.appendElement("tr");
+            Element trIcon = table.appendElement("tr").attr("style", "background-color: #E7E9EB; border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
+            trIcon.appendElement("th").attr("colspan", "2").appendElement("img").attr("src", "../src/main/resources/" + player.getRole() + ".png");
+            Element trh = table.appendElement("tr").attr("style", "padding: 8px 8px; background-color: #E7E9EB; border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
             trh.appendElement("th").text(player.getName()).attr("colspan", "2");
             getCompetitiveChampPool(roster, player).forEach((k,v) -> {
-                Element trd = table.appendElement("tr");
-                trd.appendElement("td").text(k);
-                trd.appendElement("td").text(String.valueOf(v));
+                Element trd = table.appendElement("tr").attr("style", "background-color: rgba(255," + (255-v*3) + ",0,15); border-bottom: 1px solid #ddd;border-collapse: collapse; border-spacing: 0;");
+                trd.appendElement("td").text(k).attr("style", "padding: 8px 8px; display: table-cell; text-align: left; vertical-align: top;border-collapse: collapse; border-spacing: 0;");
+                trd.appendElement("td").text(String.valueOf(v)).attr("style", "padding: 8px 8px; display: table-cell; text-align: left; vertical-align: top;border-collapse: collapse; border-spacing: 0;");
             });
         });
     }
@@ -277,18 +317,20 @@ public class OutputMaker {
         champCount.put(champName, ++count);
     }
 
-    /* static void evaluateMatches(Organization org) {
-        int nOfChanges = org.getLastRoster().getNOfChanges();
+
+    // FOR FUTURE DEVELOPMENT
+     static void evaluateMatches(Organisation org) {
+        //int nOfChanges = org.getLastRoster().getNOfChanges();
         org.getLastRoster().getPlayers().forEach(player -> {
             player.getAccounts().forEach(account -> {
-                boolean competitive = account.isCompetitive();
+                //boolean competitive = account.isCompetitive();
                 account.getMatches().forEach(match -> {
-                    if(competitive)
-                        match.setValue(500-(100*nOfChanges));
-                    else
+                    //if(competitive)
+                        //match.setValue(500-(100*nOfChanges));
+                    //else
                         match.setValue(100);
                 });
             });
         });
-    }*/
+    }
 }

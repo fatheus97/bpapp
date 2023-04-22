@@ -49,9 +49,7 @@ public class DataExtractor {
 
     private static final List<Match> matches = new ArrayList<>();
 
-    private DataExtractor() {
-
-    }
+    private DataExtractor() {}
 
     public static void setTournament(String tournament) {
         DataExtractor.tournament = tournament;
@@ -256,6 +254,9 @@ public class DataExtractor {
         for (Participant participant : info.getParticipants()) {
             participant.setInfo(info);
         }
+        for (Team team : info.getTeams()) {
+            team.setInfo(info);
+        }
 
         Document documentTimeline = NetworkUtil.getDocumentFromURLString(LOLFANDOM_WIKI + id + "/Timeline?action=edit");
         String jsonStringTimeline = Objects.requireNonNull(documentTimeline.getElementById("wpTextbox1")).text();
@@ -315,6 +316,9 @@ public class DataExtractor {
         Info info = matchWrapper.getInfo();
         for (Participant participant : info.getParticipants()) {
             participant.setInfo(info);
+        }
+        for (Team team : info.getTeams()) {
+            team.setInfo(info);
         }
 
         String jsonStringTimeline = NetworkUtil.getJSONFromURLString(API_RIOT_EU + "/lol/match/v5/matches/" + id + "/timeline");

@@ -18,6 +18,8 @@ public class Info implements Insertable {
     private long gameCreation;
     @OneToMany(mappedBy = "info", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Participant> participants = new ArrayList<>();
+    @OneToMany(mappedBy = "info", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Team> teams;
 
     public List<Participant> getParticipants() {
         return participants;
@@ -27,6 +29,11 @@ public class Info implements Insertable {
     public long getGameID() { return gameID; }
     @JsonProperty("gameId")
     public void setGameID(long value) { this.gameID = value; }
+
+    @JsonProperty("teams")
+    public List<Team> getTeams() { return teams; }
+    @JsonProperty("teams")
+    public void setTeams(List<Team> value) { this.teams = value; }
 
     @Override
     public String toString() {

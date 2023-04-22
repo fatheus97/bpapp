@@ -124,8 +124,8 @@ public class MainFrame extends JFrame {
                     waitDialog.dispose();
                     if (errorMessage != null) {
                         JOptionPane.showMessageDialog(MainFrame.this, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                    btnMakePrep.setEnabled(true);
+                    } else
+                        btnMakePrep.setEnabled(true);
                 }
             };
             worker.execute();

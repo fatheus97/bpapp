@@ -33,6 +33,7 @@ public class NetworkUtil {
             .addLimit(Bandwidth.classic(20, Refill.greedy(20, Duration.ofSeconds(1))))
             .addLimit(Bandwidth.classic(100, Refill.greedy(100, Duration.ofSeconds(120))))
             .build();
+    private NetworkUtil(){}
     public static String encodeURLString(String urlString) {
 
         int endIndex;

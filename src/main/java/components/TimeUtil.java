@@ -17,6 +17,7 @@ public class TimeUtil {
         }
     }
     private static final String ZONE = props.getProperty("zone");
+    private TimeUtil(){}
     public static long getEpochInSeconds(int offsetDays) {
         LocalDateTime localDateTime = LocalDateTime.now(ZoneId.of(ZONE)).minusDays(offsetDays);
         return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli()/1000;
