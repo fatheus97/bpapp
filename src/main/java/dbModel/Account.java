@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Table(name = "accounts")
 public class Account implements Insertable {
@@ -23,16 +24,8 @@ public class Account implements Insertable {
     private List<Match> matches = new ArrayList<>();
     private LocalDateTime lastUpdated;
 
-    public Account() {
-
-    }
-
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
-    }
-
-    public Player getPlayer() {
-        return player;
     }
 
     public List<Match> getMatches() {
@@ -53,15 +46,6 @@ public class Account implements Insertable {
 
     public String getPuuid() {
         return puuid;
-    }
-
-    @Override
-    public String toString() {
-        return "Account{" +
-                "name='" + name + '\'' +
-                ", puuid='" + puuid + '\'' +
-                ", matches=" + matches +
-                '}';
     }
 
     public void addMatch(Match match) {

@@ -1,6 +1,7 @@
 package dbModel;
 
 import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,14 +19,6 @@ public class Match implements Insertable {
     @ManyToOne
     private Roster roster;
     private int value;
-
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
 
     public Match(String matchID, Info info, Timeline timeline, Account participant) {
         this.matchID = matchID;
@@ -45,8 +38,12 @@ public class Match implements Insertable {
 
     }
 
-    public List<Account> getAccounts() {
-        return accounts;
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
     }
 
     public Timeline getTimeline() {
@@ -59,13 +56,5 @@ public class Match implements Insertable {
 
     public String getMatchID() {
         return matchID;
-    }
-
-    @Override
-    public String toString() {
-        return "Match{" +
-                "matchID='" + matchID + '\'' +
-                ", timeline=" + timeline +
-                '}';
     }
 }

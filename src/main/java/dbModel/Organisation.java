@@ -3,8 +3,8 @@ package dbModel;
 import org.hibernate.annotations.NaturalId;
 
 import jakarta.persistence.*;
+
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Entity
@@ -43,10 +43,6 @@ public class Organisation implements Insertable {
         return rosters.get(0);
     }
 
-    public Roster getRoster(int i) {
-        return rosters.get(i);
-    }
-
     public void addRoster(Roster roster) {
         rosters.add(0, roster);
     }
@@ -57,13 +53,5 @@ public class Organisation implements Insertable {
 
     public String getName() {
         return name;
-    }
-
-    @Override
-    public String toString() {
-        return "Organization{" +
-                ", rosters=" + rosters +
-                ", startingLineUp=" + startingLineUp +
-                '}';
     }
 }

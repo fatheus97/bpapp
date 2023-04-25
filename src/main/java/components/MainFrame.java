@@ -9,6 +9,7 @@ import errorHandling.PlayerNotFoundInLoLProsException;
 import gui.JCellStyleTable;
 import gui.RosterTable;
 import gui.RosterTableModel;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -34,15 +35,17 @@ public class MainFrame extends JFrame {
     private final JComboBox<String> cmbTournament;
     private final JComboBox<String> cmbOrganisation;
 
-    private static final Properties props = new Properties();
+    private static final Properties PROPS = new Properties();
+
     static {
         try {
-            props.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
+            PROPS.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private static final String[] REGIONS = props.getProperty("regions").split(",");
+
+    private static final String[] REGIONS = PROPS.getProperty("regions").split(",");
 
     public MainFrame() {
         // set frame properties
@@ -75,7 +78,7 @@ public class MainFrame extends JFrame {
 
         // set layout
         wrapperPanel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
-        add(wrapperPanel,new GridBagConstraints());
+        add(wrapperPanel, new GridBagConstraints());
         inputPanel.add(new JLabel("Region:"));
         cmbRegion.setPreferredSize(new Dimension(128, (int) cmbRegion.getPreferredSize().getHeight()));
         inputPanel.add(cmbRegion);
@@ -137,7 +140,7 @@ public class MainFrame extends JFrame {
             JLabel waitLabel = new JLabel("<html><div>" +
                     "<span style='font-size: 10px; font-weight: bold;'>Please wait</span><br>" +
                     "It can take up to several minutes according to the last time you have updated this organization.</div></html>");
-            initWaitDialog(waitDialog, waitLabel, new Dimension(400,250));
+            initWaitDialog(waitDialog, waitLabel, new Dimension(400, 250));
             JTextArea statusArea = getStatusArea(waitDialog);
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
@@ -324,13 +327,13 @@ public class MainFrame extends JFrame {
             DataExtractor.fetchAccountsToPlayer(player);
             SwingUtilities.invokeLater(() -> {
                 String currentText = waitTextArea.getText();
-                String newText = currentText.substring(0, currentText.length()-3) + (player.getRole().ordinal()+1) + "/5";
+                String newText = currentText.substring(0, currentText.length() - 3) + (player.getRole().ordinal() + 1) + "/5";
                 waitTextArea.setText(newText);
             });
         }
         SwingUtilities.invokeLater(() -> waitTextArea.append("\n"));
 
-        // TODO: 16.04.2023 show and edit player's accounts 
+        // FUTURE DEVELOPMENT TODO: 16.04.2023 show and edit player's accounts
         /*List<Player> players = org.getRoster().getPlayers();
         for (Player p : players) {
             GUI.showData(p);
@@ -350,7 +353,7 @@ public class MainFrame extends JFrame {
             }
             SwingUtilities.invokeLater(() -> {
                 String currentText = waitTextArea.getText();
-                String newText = currentText.substring(0, currentText.length()-3) + (player.getRole().ordinal()+1) + "/5";
+                String newText = currentText.substring(0, currentText.length() - 3) + (player.getRole().ordinal() + 1) + "/5";
                 waitTextArea.setText(newText);
             });
         }
@@ -370,7 +373,7 @@ public class MainFrame extends JFrame {
     private void setStartingRoster() {
         List<String> playerNames = new ArrayList<>();
         for (int i = 0; i < tblContent.getRowCount(); i++) {
-            playerNames.add((String) tblContent.getValueAt(i,1));
+            playerNames.add((String) tblContent.getValueAt(i, 1));
         }
         List<Player> players = org.getLastRoster().getPlayers();
         players.removeIf(player -> !playerNames.contains(player.getName()));
@@ -387,14 +390,14 @@ public class MainFrame extends JFrame {
 
         RosterTableModel model = new RosterTableModel(org.getLastRoster().getPlayers());
 
-        if(tblContentScroll != null)
+        if (tblContentScroll != null)
             contentPanel.remove(tblContentScroll);
 
         tblContent = new RosterTable(model);
         tblContentScroll = new JScrollPane(tblContent);
         model.getEditableCells().forEach(cell -> {
             tblContent.putEditor(cell, new DefaultCellEditor(model.getJComboBox(cell)));
-            tblContent.putRenderer(cell, new DefaultTableCellRenderer(){
+            tblContent.putRenderer(cell, new DefaultTableCellRenderer() {
                 @Override
                 public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                     return model.getJComboBox(cell);

@@ -9,7 +9,7 @@ public class CellBasedTableModel extends DefaultTableModel {
         return editableCells;
     }
 
-    private Collection<Cell> editableCells = new HashSet<>();
+    private final Collection<Cell> editableCells = new HashSet<>();
 
     public CellBasedTableModel() {
     }

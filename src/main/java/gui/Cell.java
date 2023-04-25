@@ -20,8 +20,7 @@ public class Cell {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Cell) {
-            Cell another = (Cell) obj;
+        if (obj instanceof Cell another) {
             return another.col == col && another.row == row;
         }
         return false;

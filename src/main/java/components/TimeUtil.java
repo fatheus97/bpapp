@@ -8,25 +8,32 @@ import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class TimeUtil {
-    private static final Properties props = new Properties();
+    private static final Properties PROPS = new Properties();
+
     static {
         try {
-            props.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
+            PROPS.load(NetworkUtil.class.getResourceAsStream("/config.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private static final String ZONE = props.getProperty("zone");
-    private TimeUtil(){}
+
+    private static final String ZONE = PROPS.getProperty("zone");
+
+    private TimeUtil() {
+    }
+
     public static long getEpochInSeconds(int offsetDays) {
         LocalDateTime localDateTime = LocalDateTime.now(ZoneId.of(ZONE)).minusDays(offsetDays);
-        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli()/1000;
+        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli() / 1000;
     }
+
     public static String getUTCString(int offsetDays, DateTimeFormatter dtf) {
         LocalDateTime localDateTime = LocalDateTime.now(ZoneId.of(ZONE));
         localDateTime = localDateTime.minusDays(offsetDays);
         return localDateTime.format(dtf);
     }
+
     public static LocalDateTime getUTC() {
         return LocalDateTime.now(ZoneId.of(ZONE));
     }

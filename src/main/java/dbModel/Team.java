@@ -18,20 +18,22 @@ public class Team {
     }
 
     @JsonProperty("teamId")
-    public long getTeamId() { return teamId; }
+    public long getTeamId() {
+        return teamId;
+    }
+
     @JsonProperty("teamId")
-    public void setTeamId(long value) { this.teamId = value; }
+    public void setTeamId(long value) {
+        this.teamId = value;
+    }
 
     @JsonProperty("win")
-    public boolean getWin() { return win; }
-    @JsonProperty("win")
-    public void setWin(boolean value) { this.win = value; }
+    public boolean getWin() {
+        return win;
+    }
 
-    @Override
-    public String toString() {
-        return "Team{" +
-                "teamID=" + teamId +
-                ", win=" + win +
-                '}';
+    @JsonProperty("win")
+    public void setWin(boolean value) {
+        this.win = value;
     }
 }

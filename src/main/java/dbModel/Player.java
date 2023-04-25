@@ -1,6 +1,7 @@
 package dbModel;
 
 import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +16,6 @@ public class Player implements Insertable {
     private List<Roster> rosters = new ArrayList<>();
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "player")
     private List<Account> accounts = new ArrayList<>();
-
-    public List<Roster> getRosters() {
-        return rosters;
-    }
 
     public Player(String name, Role role, Roster roster) {
         this.name = name;
@@ -44,15 +41,6 @@ public class Player implements Insertable {
 
     public void addAccount(Account acc) {
         accounts.add(acc);
-    }
-
-    @Override
-    public String toString() {
-        return "Player{" +
-                "name='" + name + '\'' +
-                ", role=" + role +
-                ", accounts=" + accounts +
-                '}';
     }
 
     public void deleteAccount(String puuid) {

@@ -34,22 +34,24 @@ public class Participant {
     public String getChampionName() {
         return championName;
     }
+
     @JsonProperty("participantId")
-    public long getParticipantId() { return participantId; }
+    public long getParticipantId() {
+        return participantId;
+    }
+
     @JsonProperty("participantId")
-    public void setParticipantId(long value) { this.participantId = value; }
+    public void setParticipantId(long value) {
+        this.participantId = value;
+    }
 
     @JsonProperty("puuid")
-    public String getPuuid() { return puuid; }
-    @JsonProperty("puuid")
-    public void setPuuid(String value) { this.puuid = value; }
+    public String getPuuid() {
+        return puuid;
+    }
 
-    @Override
-    public String toString() {
-        return "Participant{" +
-                "id=" + id +
-                ", summonerName='" + summonerName + '\'' +
-                ", championName='" + championName + '\'' +
-                '}';
+    @JsonProperty("puuid")
+    public void setPuuid(String value) {
+        this.puuid = value;
     }
 }

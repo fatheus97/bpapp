@@ -9,7 +9,12 @@ public class TimelineWrapper {
     private Timeline timeline;
 
     @JsonProperty("info")
-    public Timeline getTimeline() { return timeline; }
+    public Timeline getTimeline() {
+        return timeline;
+    }
+
     @JsonProperty("info")
-    public void setTimeline(Timeline value) { this.timeline = value; }
+    public void setTimeline(Timeline value) {
+        this.timeline = value;
+    }
 }

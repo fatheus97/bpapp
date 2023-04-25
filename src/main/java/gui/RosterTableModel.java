@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RosterTableModel extends CellBasedTableModel {
-    private List<Role> roles;
-    private Map<Role, List<String>> roleToNames;
+    private final List<Role> roles;
+    private final Map<Role, List<String>> roleToNames;
 
     public RosterTableModel(List<Player> players) {
         this.roles = players.stream()

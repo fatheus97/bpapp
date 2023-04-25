@@ -22,26 +22,32 @@ public class Timeline implements Insertable {
     private List<Frame> frames;
 
     @JsonProperty("gameId")
-    public long getGameID() { return gameID; }
+    public long getGameID() {
+        return gameID;
+    }
+
     @JsonProperty("gameId")
-    public void setGameID(long value) { this.gameID = value; }
+    public void setGameID(long value) {
+        this.gameID = value;
+    }
 
     @JsonProperty("frameInterval")
-    public long getFrameInterval() { return frameInterval; }
+    public long getFrameInterval() {
+        return frameInterval;
+    }
+
     @JsonProperty("frameInterval")
-    public void setFrameInterval(long value) { this.frameInterval = value; }
+    public void setFrameInterval(long value) {
+        this.frameInterval = value;
+    }
 
     @JsonProperty("frames")
-    public List<Frame> getFrames() { return frames; }
-    @JsonProperty("frames")
-    public void setFrames(List<Frame> value) { this.frames = value; }
+    public List<Frame> getFrames() {
+        return frames;
+    }
 
-    @Override
-    public String toString() {
-        return "Timeline{" +
-                "gameID=" + gameID +
-                ", frameInterval=" + frameInterval +
-                ", frames=" + frames.size() +
-                '}';
+    @JsonProperty("frames")
+    public void setFrames(List<Frame> value) {
+        this.frames = value;
     }
 }

@@ -6,18 +6,17 @@
         <property name="hibernate.connection.password">Vp2yUJ6UHRRxIFx</property>
         <property name="hibernate.dialect">org.hibernate.dialect.MariaDBDialect</property>
         <property name="hibernate.hbm2ddl.auto">update</property>
-        <mapping class="dbModel.Organisation" />
-        <mapping class="dbModel.Roster" />
-        <mapping class="dbModel.Player" />
-        <mapping class="dbModel.Account" />
-        <mapping class="dbModel.Match" />
-        <mapping class="dbModel.Info" />
-        <mapping class="dbModel.Timeline" />
-        <mapping class="dbModel.Participant" />
-        <mapping class="dbModel.Frame" />
-        <mapping class="dbModel.Event" />
-        <mapping class="dbModel.ParticipantFrame" />
-        <mapping class="dbModel.Position" />
-        <mapping class="dbModel.Team" />
+        <mapping class="dbModel.Organisation"/>
+        <mapping class="dbModel.Roster"/>
+        <mapping class="dbModel.Player"/>
+        <mapping class="dbModel.Account"/>
+        <mapping class="dbModel.Match"/>
+        <mapping class="dbModel.Info"/>
+        <mapping class="dbModel.Timeline"/>
+        <mapping class="dbModel.Participant"/>
+        <mapping class="dbModel.Frame"/>
+        <mapping class="dbModel.ParticipantFrame"/>
+        <mapping class="dbModel.Position"/>
+        <mapping class="dbModel.Team"/>
     </session-factory>
 </hibernate-configuration>

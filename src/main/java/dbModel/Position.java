@@ -1,7 +1,6 @@
 package dbModel;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
@@ -10,20 +9,22 @@ public class Position {
     private long y;
 
     @JsonProperty("x")
-    public long getX() { return x; }
+    public long getX() {
+        return x;
+    }
+
     @JsonProperty("x")
-    public void setX(long value) { this.x = value; }
+    public void setX(long value) {
+        this.x = value;
+    }
 
     @JsonProperty("y")
-    public long getY() { return y; }
-    @JsonProperty("y")
-    public void setY(long value) { this.y = value; }
+    public long getY() {
+        return y;
+    }
 
-    @Override
-    public String toString() {
-        return "Position{" +
-                "x=" + x +
-                ", y=" + y +
-                '}';
+    @JsonProperty("y")
+    public void setY(long value) {
+        this.y = value;
     }
 }

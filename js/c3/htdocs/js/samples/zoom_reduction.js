@@ -49,7 +49,7 @@ function main() {
         $("#status").text(JSON.stringify(info, null, " "));
     }
 
-};
+}
 
 if (typeof (Array.generate) == "undefined") {
     Array.generate = function (length, generator) {

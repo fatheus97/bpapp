@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "rosters")
-public class Roster implements Insertable{
+public class Roster implements Insertable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -51,16 +51,10 @@ public class Roster implements Insertable{
         return matches;
     }
 
-    @Override
-    public String toString() {
-        return "Roster{" +
-                "matches=" + matches +
-                '}';
-    }
-
     public String playersToString() {
         return players.stream().map(Player::getName).collect(Collectors.joining(","));
     }
+
     public void addPlayer(Player player) {
         this.players.add(player);
     }
