@@ -5,6 +5,7 @@ import com.google.gson.*;
 import errorHandling.PlayerNotFoundInLoLProsException;
 import extracting.MatchWrapper;
 import extracting.TimelineWrapper;
+import org.hibernate.service.spi.ServiceException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -59,7 +60,7 @@ public class DataExtractor {
         DataExtractor.tournament = tournament;
     }
 
-    public static Organisation getOrganisation(String name) throws URISyntaxException, IOException, InterruptedException {
+    public static Organisation getOrganisation(String name) throws URISyntaxException, IOException, InterruptedException, IllegalStateException, ServiceException {
 
         Organisation org = DatabaseManager.getObject(Organisation.class, name);
 

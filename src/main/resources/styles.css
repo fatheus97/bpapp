@@ -1,6 +1,9 @@
+@font-face {
+    font-family: RobotoMono;
+    src: url("RobotoMono-VariableFont_wght.ttf");
+}
+
 * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
 }
 
@@ -10,25 +13,6 @@ body {
     background-image: url("background.jpg");
     background-position: center;
     background-size: cover;
-}
-
-header {
-    position: fixed;
-    width: 100%;
-    background-color: rgba(237, 247, 252, 0.75);
-    padding: 20px 5%;
-}
-
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-main {
-    padding-top: 76px;
-    height: 100vh;
-    /*padding-bottom: 45px;*/
 }
 
 table {
@@ -58,18 +42,10 @@ table {
     max-width: 90%;
 }
 
-footer {
-    opacity: 0.5;
-    color: white;
-}
-
-h1 {
-    padding-top: 16px;
-    font-size: 32px;
-}
-
-h2 {
-    font-size: 24px;
-    padding-top: 32px;
-    padding-bottom: 8px;
+hr {
+    border: none;
+    height: 1px;
+    background-color: #182B42;
+    width: 90%;
+    margin-top: 4em;
 }

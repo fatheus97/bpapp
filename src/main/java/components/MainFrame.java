@@ -9,6 +9,7 @@ import errorHandling.PlayerNotFoundInLoLProsException;
 import gui.JCellStyleTable;
 import gui.RosterTable;
 import gui.RosterTableModel;
+import org.hibernate.service.spi.ServiceException;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -114,6 +115,8 @@ public class MainFrame extends JFrame {
                     } catch (UnsupportedOperationException e) {
                         errorMessage = "The Roster of " + cmbOrganisation.getSelectedItem() + " for " + cmbTournament.getSelectedItem() + " was not announced yet.";
                         // TODO: 07.04.2023 manually add team's roster
+                    } catch (IllegalStateException | ServiceException e) {
+                        errorMessage = "The connection to the database has not been established, probably because it is not running.";
                     } catch (Exception e) {
                         errorMessage = e.getMessage();
                         e.printStackTrace();
@@ -380,7 +383,7 @@ public class MainFrame extends JFrame {
         org.setStartingLineUp(new Roster(org, players));
     }
 
-    private void loadRoster(String orgName) throws URISyntaxException, IOException, InterruptedException {
+    private void loadRoster(String orgName) throws URISyntaxException, IOException, InterruptedException, IllegalStateException, ServiceException {
         DataExtractor.setTournament((String) cmbTournament.getSelectedItem());
 
         org = DataExtractor.getOrganisation(orgName);

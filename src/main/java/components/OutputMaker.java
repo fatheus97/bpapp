@@ -40,6 +40,10 @@ public class OutputMaker {
         Element head = doc.head();
 
         head.append("""
+                <meta charset="utf-8">
+                <meta name="author" content="Frantisek Blaha">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
                 <!-- Load c3.css -->
                 <link href="../js/c3/c3.css" rel="stylesheet">
                     
@@ -82,6 +86,7 @@ public class OutputMaker {
 
     private static void addGraphs(Roster roster) {
         addGoldGraph(roster);
+        container.appendElement("hr");
     }
 
     private static void addGoldGraph(Roster roster) {
@@ -134,9 +139,12 @@ public class OutputMaker {
         Optional<Player> optionalPlayer = roster.getPlayers().stream().filter(player -> player.getRole() == Role.JUNGLE).findFirst();
         if (optionalPlayer.isPresent())
             addHeatmap(optionalPlayer.get(), roster);
+        container.appendElement("hr");
+
         optionalPlayer = roster.getPlayers().stream().filter(player -> player.getRole() == Role.SUPPORT).findFirst();
         if (optionalPlayer.isPresent())
             addHeatmap(optionalPlayer.get(), roster);
+        container.appendElement("hr");
     }
 
     private static void addHeatmap(Player player, Roster roster) throws IOException, ArrayIndexOutOfBoundsException {
@@ -237,8 +245,11 @@ public class OutputMaker {
 
     private static void addInfographics(Roster roster) {
         addCompetitiveGameRecord(roster);
+        container.appendElement("hr");
         addCompetitiveChampPool(roster);
+        container.appendElement("hr");
         addSoloQChampPool(roster);
+        container.appendElement("hr");
     }
 
     private static void addCompetitiveGameRecord(Roster roster) {
